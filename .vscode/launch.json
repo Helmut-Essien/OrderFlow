@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "OrderFlow API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-api",
+      "program": "${workspaceFolder}/backend/src/OrderFlow.Api/bin/Debug/net9.0/OrderFlow.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend/src/OrderFlow.Api",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5180"
+      }
+    },
+    {
+      "name": "OrderFlow Frontend",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "OrderFlow: API + Frontend",
+      "configurations": [
+        "OrderFlow API",
+        "OrderFlow Frontend"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "order": 1,
+        "group": "OrderFlow"
+      }
+    }
+  ]
+}
