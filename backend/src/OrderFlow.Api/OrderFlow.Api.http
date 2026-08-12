@@ -1,0 +1,28 @@
+@OrderFlow.Api_HostAddress = http://localhost:5180
+
+POST {{OrderFlow.Api_HostAddress}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "licenseKey": "ORDERFLOW-DEVK-TEST",
+  "email": "owner@shop.example",
+  "password": "ChangeMe123",
+  "shopName": "Demo Provision Store",
+  "displayName": "Ama Owner",
+  "phone": "+233200000000"
+}
+
+###
+
+POST {{OrderFlow.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@shop.example",
+  "password": "ChangeMe123"
+}
+
+###
+
+GET {{OrderFlow.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{token}}

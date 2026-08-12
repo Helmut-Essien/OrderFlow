@@ -1,0 +1,92 @@
+<div class="min-h-full flex flex-col lg:flex-row">
+  <section class="bg-forest text-white px-6 py-10 lg:w-[42%] lg:px-12 lg:py-16 flex flex-col justify-between">
+    <div>
+      <p class="text-gold font-semibold tracking-[0.2em] uppercase text-xs">OrderFlow</p>
+      <h1 class="mt-4 text-3xl lg:text-4xl font-bold leading-tight max-w-sm">
+        Orders from WhatsApp. Stock you can trust.
+      </h1>
+      <p class="mt-4 text-white/80 max-w-md">
+        Built for provision shops, pharmacies, and small wholesalers in Ghana.
+        Sign up with your Platform license, then run the shop from one dashboard.
+      </p>
+    </div>
+    <p class="mt-10 text-sm text-white/60">License keys are used only at sign up. Plan limits stay in OrderFlow.</p>
+  </section>
+
+  <section class="flex-1 px-6 py-10 lg:px-16 lg:py-16">
+    <div class="max-w-md mx-auto">
+      <div class="flex rounded-full bg-white p-1 shadow-sm border border-stone-200 mb-8">
+        <button
+          type="button"
+          class="flex-1 rounded-full py-2 text-sm font-semibold"
+          [class.bg-forest]="mode() === 'login'"
+          [class.text-white]="mode() === 'login'"
+          [class.text-stone-600]="mode() !== 'login'"
+          (click)="setMode('login')">
+          Sign in
+        </button>
+        <button
+          type="button"
+          class="flex-1 rounded-full py-2 text-sm font-semibold"
+          [class.bg-forest]="mode() === 'signup'"
+          [class.text-white]="mode() === 'signup'"
+          [class.text-stone-600]="mode() !== 'signup'"
+          (click)="setMode('signup')">
+          Sign up
+        </button>
+      </div>
+
+      <h2 class="text-2xl font-bold">{{ mode() === 'signup' ? 'Create your shop' : 'Welcome back' }}</h2>
+      <p class="mt-1 text-stone-600 mb-6">
+        {{ mode() === 'signup'
+          ? 'Enter the license key from Platform, then create the owner account.'
+          : 'Sign in with the email and password you used at sign up.' }}
+      </p>
+
+      @if (error()) {
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {{ error() }}
+        </div>
+      }
+
+      <form class="space-y-4" (ngSubmit)="submit()" [formGroup]="form">
+        @if (mode() === 'signup') {
+          <label class="block">
+            <span class="text-sm font-semibold">License key</span>
+            <input formControlName="licenseKey" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" placeholder="ORDERFLOW-XXXX-YYYY" autocomplete="off" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold">Shop name</span>
+            <input formControlName="shopName" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" placeholder="Tema Provisions" />
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm font-semibold">Your name</span>
+              <input formControlName="displayName" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" placeholder="Ama" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold">Phone</span>
+              <input formControlName="phone" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" placeholder="+233..." />
+            </label>
+          </div>
+        }
+
+        <label class="block">
+          <span class="text-sm font-semibold">Email</span>
+          <input formControlName="email" type="email" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" placeholder="you@shop.com" />
+        </label>
+        <label class="block">
+          <span class="text-sm font-semibold">Password</span>
+          <input formControlName="password" type="password" class="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5" [placeholder]="mode() === 'signup' ? 'At least 8 characters' : 'Your password'" />
+        </label>
+
+        <button
+          type="submit"
+          class="w-full rounded-lg bg-forest hover:bg-forest-dark text-white font-semibold py-3 disabled:opacity-60"
+          [disabled]="submitting()">
+          {{ submitting() ? 'Please wait…' : (mode() === 'signup' ? 'Sign up' : 'Sign in') }}
+        </button>
+      </form>
+    </div>
+  </section>
+</div>

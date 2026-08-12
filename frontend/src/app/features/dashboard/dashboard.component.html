@@ -1,0 +1,46 @@
+<div class="min-h-full">
+  <header class="bg-forest text-white">
+    <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
+      <div>
+        <p class="text-gold text-xs font-semibold tracking-[0.2em] uppercase">OrderFlow</p>
+        <h1 class="text-lg font-bold">{{ auth.currentUser()?.shopName || 'Your shop' }}</h1>
+      </div>
+      <button type="button" class="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20" (click)="auth.logout()">
+        Sign out
+      </button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-8">
+    <p class="text-stone-600">
+      Welcome{{ auth.currentUser()?.displayName ? ', ' + auth.currentUser()?.displayName : '' }}.
+      This is the first slice: license-backed login. Products, orders, WhatsApp, and Paystack come next.
+    </p>
+
+    @if (auth.currentUser()?.plan?.isUnrecognized) {
+      <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        Platform returned plan “{{ auth.currentUser()?.plan?.originalName }}”, which OrderFlow does not recognize yet.
+        Starter limits are applied until the plan name is mapped.
+      </div>
+    }
+
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <article class="rounded-xl bg-white border border-stone-200 p-4">
+        <p class="text-sm text-stone-500">Plan</p>
+        <p class="mt-1 text-2xl font-bold">{{ auth.currentUser()?.plan?.name }}</p>
+      </article>
+      <article class="rounded-xl bg-white border border-stone-200 p-4">
+        <p class="text-sm text-stone-500">Today’s sales</p>
+        <p class="mt-1 text-2xl font-bold">GHS 0.00</p>
+      </article>
+      <article class="rounded-xl bg-white border border-stone-200 p-4">
+        <p class="text-sm text-stone-500">Orders</p>
+        <p class="mt-1 text-2xl font-bold">0</p>
+      </article>
+      <article class="rounded-xl bg-white border border-stone-200 p-4">
+        <p class="text-sm text-stone-500">Low stock</p>
+        <p class="mt-1 text-2xl font-bold">—</p>
+      </article>
+    </div>
+  </main>
+</div>
