@@ -195,7 +195,7 @@
                        placeholder:text-slate-400
                        focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
                 [placeholder]="mode() === 'signup' ? 'At least 8 characters' : 'Your password'"
-                [attr.maxlength]="mode() === 'signup' ? limits.password : null"
+                [attr.maxlength]="limits.password"
                 [attr.autocomplete]="mode() === 'signup' ? 'new-password' : 'current-password'" />
               <button
                 type="button"
@@ -222,7 +222,7 @@
               <p class="mt-1.5 text-sm text-red-700">Password is required.</p>
             } @else if (mode() === 'signup' && showError('password', 'minlength')) {
               <p class="mt-1.5 text-sm text-red-700">Password must be at least {{ limits.passwordMin }} characters.</p>
-            } @else if (mode() === 'signup' && showError('password', 'maxlength')) {
+            } @else if (showError('password', 'maxlength')) {
               <p class="mt-1.5 text-sm text-red-700">Password must be at most {{ limits.password }} characters.</p>
             }
           </label>

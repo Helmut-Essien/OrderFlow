@@ -20,6 +20,7 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 - Dashboard cards use real counts (sales may be 0 until slice 3)
 - Low-stock list on dashboard
 - Angular product feature: `features/products/{data,pages,routes}` under `/app/products`; extend shell nav; Signals for list/form state; DTO models mirror `Shared/DTOs`
+- **Full-stack constraints** for Product (and related) fields: Domain + EF CHECKs/MaxLength + FluentValidation + Shared DTO annotations + Angular `PRODUCT_FIELD_LIMITS` / validators / `maxlength` in the same slice — see [reference.md](reference.md#constraints-full-stack)
 
 ## Slice 3 notes (stock)
 

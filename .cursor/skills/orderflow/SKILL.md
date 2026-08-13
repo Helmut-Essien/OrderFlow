@@ -3,9 +3,11 @@ name: orderflow
 description: >-
   Guides the OrderFlow B2B SaaS: Angular 19 + Tailwind frontend, ASP.NET Core 9
   Clean Architecture API, PostgreSQL, JWT, Platform license validation, WhatsApp
-  orders, inventory, Paystack. Use for this repo, any implementation slice,
-  auth, shops, products, orders, WhatsApp, payments, plan limits, migrations,
-  or local dev. Delivers one slice at a time per user confirmation.
+  orders, inventory, Paystack. Enforces full-stack field constraints (Domain, EF
+  checks, FluentValidation, Shared DTOs, Angular limits/validators) in the same
+  slice. Use for this repo, any implementation slice, auth, shops, products,
+  orders, WhatsApp, payments, plan limits, migrations, validations, or local
+  dev. Delivers one slice at a time per user confirmation.
 ---
 
 # OrderFlow
@@ -28,6 +30,7 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 3. No placeholders (`// TODO`, `// add logic here`).
 4. External setup (Postgres, Platform) → `docker-compose` or clear notes in [README.md](../../../README.md).
 5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, and frontend conventions.
+6. **Constraints are full-stack** — any new/changed field limit, requiredness, enum set, or normalization ships in the **same slice** on Domain + EF + FluentValidation + Shared DTOs **and** Angular (limits constant, validators, `maxlength`, submit normalize). Never leave backend-only or frontend-only constraints. Checklist: [reference.md](reference.md#constraints-full-stack).
 
 ## Technology stack
 
@@ -54,7 +57,7 @@ OrderFlow.sln
 frontend/                          # Angular project name: frontend
   src/app/
     core/                          # cross-cutting (auth session, shell, shop state)
-    shared/                        # dumb UI (pipes, etc.)
+    shared/                        # pipes, validators, dumb UI
     features/                      # mirrors Application/Features + API areas
 backend/src/
   OrderFlow.Api/                   # Controllers, middleware, Program.cs
@@ -72,9 +75,10 @@ Root namespaces match project names (`OrderFlow.Api`, `OrderFlow.Application`, �
 | Backend | Angular |
 |---------|---------|
 | `Application/Features/{Name}/` | `features/{name}/` |
-| `Shared/DTOs/{Name}/*.cs` | `features/{name}/data/*.models.ts` (domain features) |
+| `Shared/DTOs/{Name}/*.cs` (+ `[StringLength]`) | `features/{name}/data/*.models.ts` + `*_FIELD_LIMITS` (domain features) |
 | `Api/Controllers/{Name}Controller` | `features/{name}/data/*.api.ts` |
-| JWT / tenancy / session | `core/auth` + `core/shop` |
+| FluentValidation max/min/required | Angular `Validators` + `shared/validators` + `[attr.maxlength]` |
+| JWT / tenancy / session | `core/auth` (+ `AUTH_FIELD_LIMITS`) + `core/shop` |
 | Domain entities | Never on the client |
 
 Auth is special: DTO models + HTTP live in `core/auth` because session is app-wide. Core must **not** import features.
@@ -108,12 +112,14 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 
 - Nullable reference types, async/await, constructor DI
 - Feature folders + MediatR commands/queries + FluentValidation
-- Private entity setters; factory methods (`Shop.Create`, `User.CreateOwner`)
-- Enums stored as PostgreSQL strings
+- Private entity setters; factory methods (`Shop.Create`, `User.CreateOwner`) with **domain guards** (null/whitespace, max lengths, fixed-size hashes, normalize email lowercase / trim)
+- Enums stored as PostgreSQL strings; EF **CHECK** constraints for allowed enum string values and non-empty required strings
+- Shared DTOs: `[Required]` / `[StringLength]` / `[EmailAddress]` must match FluentValidation + EF `HasMaxLength`
 - Angular: standalone components, `inject()`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
-- Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/`, `features/{name}/pages|data|routes` — see [reference.md](reference.md)
+- Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/` (pipes, **validators**), `features/{name}/pages|data|routes` — see [reference.md](reference.md)
 - Angular routes: `/login` (guest), `/app` (auth shell + children); `/` redirects to `/app`
 - Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
+- Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
 - Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))

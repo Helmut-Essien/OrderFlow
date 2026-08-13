@@ -25,26 +25,38 @@ public class User
     }
 
     public static User CreateOwner(string shopId, string email, string displayName, string passwordHash)
-    {
-        return new User
-        {
-            ShopId = shopId,
-            Email = email,
-            DisplayName = displayName,
-            PasswordHash = passwordHash,
-            Role = UserRole.Owner
-        };
-    }
+        => Create(shopId, email, displayName, passwordHash, UserRole.Owner);
 
     public static User CreateAssistant(string shopId, string email, string displayName, string passwordHash)
+        => Create(shopId, email, displayName, passwordHash, UserRole.Assistant);
+
+    private static User Create(
+        string shopId,
+        string email,
+        string displayName,
+        string passwordHash,
+        UserRole role)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(shopId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        if (normalizedEmail.Length > 320)
+            throw new ArgumentOutOfRangeException(nameof(email), "Email cannot exceed 320 characters.");
+
+        var normalizedDisplayName = displayName.Trim();
+        if (normalizedDisplayName.Length > 200)
+            throw new ArgumentOutOfRangeException(nameof(displayName), "Display name cannot exceed 200 characters.");
+
         return new User
         {
             ShopId = shopId,
-            Email = email,
-            DisplayName = displayName,
+            Email = normalizedEmail,
+            DisplayName = normalizedDisplayName,
             PasswordHash = passwordHash,
-            Role = UserRole.Assistant
+            Role = role
         };
     }
 }

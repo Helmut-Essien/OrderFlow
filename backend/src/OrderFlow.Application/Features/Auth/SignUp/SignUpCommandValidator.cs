@@ -10,7 +10,11 @@ public sealed class SignUpCommandValidator : AbstractValidator<SignUpCommand>
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8).MaximumLength(128);
         RuleFor(x => x.ShopName).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.DisplayName).MaximumLength(200);
-        RuleFor(x => x.Phone).MaximumLength(50);
+        RuleFor(x => x.DisplayName)
+            .MaximumLength(200)
+            .When(x => !string.IsNullOrWhiteSpace(x.DisplayName));
+        RuleFor(x => x.Phone)
+            .MaximumLength(50)
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone));
     }
 }

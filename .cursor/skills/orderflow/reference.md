@@ -62,11 +62,11 @@ Exception middleware maps:
 
 ## Domain (implemented)
 
-**Shop:** Id, Name, Phone?, Address?, LicenseLookupHash, ProtectedLicenseKey, PlanName, PlanExpiresAt?, PlanUnrecognized, WhatsAppConnectionStatus, CreatedAt, UpdatedAt
+**Shop:** Id, Name (≤200), Phone? (≤50), Address? (≤400), LicenseLookupHash (exactly 64), ProtectedLicenseKey, PlanName (≤100), PlanExpiresAt?, PlanUnrecognized, WhatsAppConnectionStatus, CreatedAt, UpdatedAt
 
-**User:** Id, ShopId, Email (unique, lowercase), DisplayName, PasswordHash, Role (`Owner` \| `Assistant`), CreatedAt
+**User:** Id, ShopId, Email (unique, lowercase, ≤320), DisplayName (≤200), PasswordHash, Role (`Owner` \| `Assistant`), CreatedAt
 
-Roles: `UserRole`. WhatsApp: `Disconnected` \| `Connected` \| `Error`.
+Roles: `UserRole`. WhatsApp: `Disconnected` \| `Connected` \| `Error`. DB CHECKs enforce enum sets and non-empty required strings — see [Constraints](#constraints-full-stack).
 
 ## Domain (planned — add when that slice starts)
 
@@ -95,27 +95,75 @@ If rows affected = 0, throw `ConcurrencyAppException` and notify the customer/sh
 Features/{Name}/
   {Verb}{Name}Command.cs          # or Query
   {Verb}{Name}CommandHandler.cs
-  {Verb}{Name}CommandValidator.cs
+  {Verb}{Name}CommandValidator.cs # required for every write; lengths match Shared DTO + EF
 ```
 
 Register happens automatically via `AddMediatR` + `AddValidatorsFromAssembly`. Controllers send MediatR requests only.
 
 New external systems: interface in `Application/Common/Interfaces`, adapter in `Infrastructure/{Area}/`.
 
+Passwords and other secrets: always set `MaximumLength` on login/verify commands too (DoS / payload bound), not only signup.
+
 ## Shared DTOs
 
 `OrderFlow.Shared/DTOs` contains **public, external-facing contracts** used by the Angular frontend (e.g. `AuthResponse`, `ProductDto`, `OrderListDto`). Internal MediatR responses can be simple records or DTOs, but must not expose Domain entities directly. Use AutoMapper or explicit mapping (`ProductDto.FromEntity(product)`) inside the handler, not in the Controller.
+
+DTO DataAnnotations (`[Required]`, `[StringLength]`, `[EmailAddress]`, `[MinLength]`) are documentation + secondary guard — **FluentValidation is authoritative** for API 400s. Lengths must match EF `HasMaxLength` and Angular `*_FIELD_LIMITS`.
+
+## Constraints (full stack)
+
+When adding or changing a writeable field, complete **all** applicable layers in the **same slice**. Do not ship backend-only or frontend-only limits.
+
+| Layer | What to add |
+|-------|-------------|
+| Domain factory / mutator | `ArgumentException.ThrowIfNullOrWhiteSpace`; max-length / fixed-size checks; trim; email → `ToLowerInvariant()` |
+| EF configuration | `HasMaxLength`, `IsRequired`, unique indexes; `HasCheckConstraint` for non-empty strings, enum string sets, hash length |
+| Migration | Generated from EF config; never hand-edit snapshot |
+| FluentValidation | `NotEmpty` / `EmailAddress` / `MinimumLength` / `MaximumLength`; optional fields: `.When(x => !string.IsNullOrWhiteSpace(...))` |
+| Shared DTO | Matching `[StringLength]` / `[Required]` / `[EmailAddress]` |
+| Angular models | `*_FIELD_LIMITS` constant beside DTOs (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`) |
+| Angular form | Same limits via `Validators.maxLength` / `minLength` + `requiredTrimmed` from `shared/validators`; HTML `[attr.maxlength]`; inline error messages |
+| Submit payload | Trim strings; omit blank optionals; email `.toLowerCase()` |
+
+### Auth field limits (canonical)
+
+| Field | Max | Notes |
+|-------|-----|--------|
+| LicenseKey | 100 | Signup only |
+| Email | 320 | Unique, stored lowercase |
+| Password | 128 | Min 8 on signup; max on login too |
+| ShopName | 200 | |
+| DisplayName | 200 | Optional; blank → shop name |
+| Phone | 50 | Optional |
+| LicenseLookupHash | 64 | Exact SHA-256 hex (domain + DB check) |
+
+Enums with DB CHECKs: `UserRole` → `Owner` \| `Assistant`; `WhatsAppConnectionStatus` → `Disconnected` \| `Connected` \| `Error`.
+
+### New entity checklist
+
+Copy and tick when implementing a feature entity:
+
+```
+- [ ] Domain factory guards + normalization
+- [ ] EF MaxLength / Required / indexes / CHECK (enums, non-empty, numeric ranges)
+- [ ] FluentValidation on every write command
+- [ ] Shared DTO annotations match
+- [ ] Angular FIELD_LIMITS + validators + maxlength + errors
+- [ ] Submit trim / lowercase email / omit empty optionals
+- [ ] Validator unit tests; migration if schema changed
+```
 
 ## Frontend conventions
 
 ```
 frontend/src/app/
   core/
-    auth/             # AuthService, guards, interceptor, models, auth HTTP
+    auth/             # AuthService, guards, interceptor, models (+ AUTH_FIELD_LIMITS), auth HTTP
     layout/           # ShellComponent — desktop sidebar, mobile top/bottom nav
     shop/             # ShopStateService (shopId, shopName, plan Signals)
   shared/
     pipes/            # ghsCurrency
+    validators/       # requiredTrimmed, passwordsMatch, shared form helpers
   features/           # mirrors Application/Features + API controllers
     auth/
       pages/login/    # Auth Gateway UI
@@ -146,9 +194,10 @@ Future children under `/app`: `products`, `orders`, `settings` (add nav links in
 - JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`
 - Tailwind tokens: `forest`, `forest-dark`, `gold`, `paper`, `ink`; font Source Sans 3
 - **Signals:** local UI in components; shop/plan in `ShopStateService` (updated by `AuthService` on login/me/logout). No NgRx. Use `takeUntilDestroyed()` for RxJS cleanup.
-- **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models for domain features. Auth HTTP stays in `core/auth`.
-- **DTO mirror:** TypeScript interfaces match `OrderFlow.Shared/DTOs` camelCase — never Domain entities.
-- When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav.
+- **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models + `*_FIELD_LIMITS` for domain features. Auth HTTP + `AUTH_FIELD_LIMITS` stay in `core/auth`.
+- **DTO mirror:** TypeScript interfaces match `OrderFlow.Shared/DTOs` camelCase — never Domain entities. Limits constants must match Shared `[StringLength]` values.
+- **Form constraints:** never rely on API 400 alone; client validators + `maxlength` must match backend before submit.
+- When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav, apply the constraints checklist above.
 
 ## Logging
 

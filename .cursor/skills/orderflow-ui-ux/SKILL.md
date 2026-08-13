@@ -3,8 +3,9 @@ name: orderflow-ui-ux
 description: >-
   OrderFlow UI/UX: mobile-first responsive shells, Auth Gateway with illustrated
   brand panel, dashboard, inventory, product forms, landing with motion flair,
-  atmosphere textures. Use when building Angular pages, navigation, forms,
-  tables, empty states, or marketing UI.
+  atmosphere textures. Form field limits and validators must mirror backend
+  Shared DTOs in the same slice. Use when building Angular pages, navigation,
+  forms, tables, empty states, or marketing UI.
 ---
 
 # OrderFlow UI/UX
@@ -109,13 +110,15 @@ Prefer **illustrated gateway** over a bare centered card.
 
 ## Angular notes
 
-Structure and layering: [orderflow reference](../orderflow/reference.md) (Frontend conventions).
+Structure and layering: [orderflow reference](../orderflow/reference.md) (Frontend conventions + Constraints).
 
 - Shell: `core/layout/ShellComponent` under `/app` (sidebar `md+`, bottom nav mobile)
 - Pages: `features/{name}/pages/...`; feature `routes.ts` lazy-loaded
 - Shop/plan: `ShopStateService` — prefer over reading auth only in templates when sharing across features
 - Tokens: `forest` / `gold` / `paper` / `ink`; atmosphere from [atmosphere.md](../orderflow-design-system/atmosphere.md)
 - Currency pipe: `shared/pipes/ghsCurrency`
+- Validators: `shared/validators` (`requiredTrimmed`, etc.); feature/auth `*_FIELD_LIMITS` must match backend Shared DTOs
+- Forms: reactive forms; `[attr.maxlength]` + inline errors for every limited field; trim / lowercase email on submit
 - Mobile layout first, then `md:` / `lg:`
 - Do not add nav items for routes that do not exist yet
 
@@ -125,7 +128,8 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 2. Apply [orderflow-design-system](../orderflow-design-system/SKILL.md)
 3. Mobile → tablet → desktop
 4. Real API data; honest empties
-5. One slice; ask before the next
+5. If the screen writes data: apply [orderflow constraints checklist](../orderflow/reference.md#constraints-full-stack) with the API in the same slice
+6. One slice; ask before the next
 
 ## Anti-patterns
 
@@ -135,3 +139,5 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Texture on tables/forms
 - Marketing pricing that contradicts Platform plans
 - Desktop-only layouts
+- Client forms without max length / requiredness that the API already enforces
+- Hard-coding field limits in the template instead of a shared `*_FIELD_LIMITS` constant

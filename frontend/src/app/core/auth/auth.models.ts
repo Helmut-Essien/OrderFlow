@@ -1,3 +1,16 @@
+/** Mirrors backend Shared DTO / FluentValidation field limits. */
+export const AUTH_FIELD_LIMITS = {
+  licenseKey: 100,
+  email: 320,
+  password: 128,
+  passwordMin: 8,
+  shopName: 200,
+  displayName: 200,
+  phone: 50
+} as const;
+
+export type UserRole = 'Owner' | 'Assistant';
+
 export interface PlanInfo {
   name: string;
   originalName?: string | null;
@@ -17,7 +30,7 @@ export interface AuthResponse {
   userId: string;
   email: string;
   displayName: string;
-  role: string;
+  role: UserRole | string;
   plan: PlanInfo;
 }
 
@@ -27,10 +40,11 @@ export interface MeResponse {
   userId: string;
   email: string;
   displayName: string;
-  role: string;
+  role: UserRole | string;
   plan: PlanInfo;
 }
 
+/** Mirrors OrderFlow.Shared.DTOs.Auth.SignUpRequest */
 export interface SignUpRequest {
   licenseKey: string;
   email: string;
@@ -40,6 +54,7 @@ export interface SignUpRequest {
   phone?: string;
 }
 
+/** Mirrors OrderFlow.Shared.DTOs.Auth.LoginRequest */
 export interface LoginRequest {
   email: string;
   password: string;

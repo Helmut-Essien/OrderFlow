@@ -1,33 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
-
-/** Matches FluentValidation NotEmpty for strings (rejects whitespace-only). */
-const requiredTrimmed: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const value = control.value;
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return { required: true };
-  }
-  return null;
-};
-
-const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const password = control.get('password')?.value as string | undefined;
-  const confirmPassword = control.get('confirmPassword')?.value as string | undefined;
-  if (!confirmPassword?.trim()) {
-    return null;
-  }
-  return password === confirmPassword ? null : { passwordsMismatch: true };
-};
+import { AUTH_FIELD_LIMITS } from '../../../../core/auth/auth.models';
+import {
+  passwordsMatchValidator,
+  requiredTrimmed
+} from '../../../../shared/validators/auth.validators';
 
 interface ApiValidationError {
   propertyName?: string;
@@ -51,18 +31,8 @@ export class LoginComponent {
   readonly passwordVisible = signal(false);
   readonly confirmPasswordVisible = signal(false);
 
-  /** Backend: SignUpCommandValidator + LoginCommandValidator */
-  private static readonly limits = {
-    licenseKey: 100,
-    email: 320,
-    password: 128,
-    passwordMin: 8,
-    shopName: 200,
-    displayName: 200,
-    phone: 50
-  } as const;
-
-  readonly limits = LoginComponent.limits;
+  /** Backend: SignUpCommandValidator + LoginCommandValidator + DTO StringLength */
+  readonly limits = AUTH_FIELD_LIMITS;
 
   togglePasswordVisibility(): void {
     this.passwordVisible.update((visible) => !visible);
@@ -75,18 +45,20 @@ export class LoginComponent {
   readonly form = this.fb.nonNullable.group({
     licenseKey: [''],
     shopName: [''],
-    displayName: ['', [Validators.maxLength(LoginComponent.limits.displayName)]],
-    phone: ['', [Validators.maxLength(LoginComponent.limits.phone)]],
+    displayName: ['', [Validators.maxLength(AUTH_FIELD_LIMITS.displayName)]],
+    phone: ['', [Validators.maxLength(AUTH_FIELD_LIMITS.phone)]],
     email: [
       '',
       [
         requiredTrimmed,
         Validators.email,
-        Validators.maxLength(LoginComponent.limits.email)
+        Validators.maxLength(AUTH_FIELD_LIMITS.email)
       ]
     ],
-    // Login rules by default (password: NotEmpty only)
-    password: ['', [requiredTrimmed]],
+    password: [
+      '',
+      [requiredTrimmed, Validators.maxLength(AUTH_FIELD_LIMITS.password)]
+    ],
     confirmPassword: ['']
   });
 
@@ -138,7 +110,7 @@ export class LoginComponent {
       this.submitting.set(true);
       this.auth
         .login({
-          email: value.email.trim(),
+          email: value.email.trim().toLowerCase(),
           password: value.password
         })
         .subscribe({
@@ -156,14 +128,17 @@ export class LoginComponent {
     }
 
     const value = this.form.getRawValue();
+    const displayName = value.displayName.trim();
+    const phone = value.phone.trim();
+
     this.submitting.set(true);
     this.auth
       .signUp({
         licenseKey: value.licenseKey.trim(),
         shopName: value.shopName.trim(),
-        displayName: value.displayName.trim() || undefined,
-        phone: value.phone.trim() || undefined,
-        email: value.email.trim(),
+        displayName: displayName || undefined,
+        phone: phone || undefined,
+        email: value.email.trim().toLowerCase(),
         password: value.password
       })
       .subscribe({
@@ -182,27 +157,33 @@ export class LoginComponent {
     if (mode === 'signup') {
       licenseKey.setValidators([
         requiredTrimmed,
-        Validators.maxLength(LoginComponent.limits.licenseKey)
+        Validators.maxLength(AUTH_FIELD_LIMITS.licenseKey)
       ]);
       shopName.setValidators([
         requiredTrimmed,
-        Validators.maxLength(LoginComponent.limits.shopName)
+        Validators.maxLength(AUTH_FIELD_LIMITS.shopName)
       ]);
-      displayName.setValidators([Validators.maxLength(LoginComponent.limits.displayName)]);
-      phone.setValidators([Validators.maxLength(LoginComponent.limits.phone)]);
+      displayName.setValidators([Validators.maxLength(AUTH_FIELD_LIMITS.displayName)]);
+      phone.setValidators([Validators.maxLength(AUTH_FIELD_LIMITS.phone)]);
       password.setValidators([
         requiredTrimmed,
-        Validators.minLength(LoginComponent.limits.passwordMin),
-        Validators.maxLength(LoginComponent.limits.password)
+        Validators.minLength(AUTH_FIELD_LIMITS.passwordMin),
+        Validators.maxLength(AUTH_FIELD_LIMITS.password)
       ]);
-      confirmPassword.setValidators([requiredTrimmed]);
+      confirmPassword.setValidators([
+        requiredTrimmed,
+        Validators.maxLength(AUTH_FIELD_LIMITS.password)
+      ]);
       this.form.setValidators(passwordsMatchValidator);
     } else {
       licenseKey.clearValidators();
       shopName.clearValidators();
-      displayName.setValidators([Validators.maxLength(LoginComponent.limits.displayName)]);
-      phone.setValidators([Validators.maxLength(LoginComponent.limits.phone)]);
-      password.setValidators([requiredTrimmed]);
+      displayName.setValidators([Validators.maxLength(AUTH_FIELD_LIMITS.displayName)]);
+      phone.setValidators([Validators.maxLength(AUTH_FIELD_LIMITS.phone)]);
+      password.setValidators([
+        requiredTrimmed,
+        Validators.maxLength(AUTH_FIELD_LIMITS.password)
+      ]);
       confirmPassword.clearValidators();
       this.form.clearValidators();
     }
