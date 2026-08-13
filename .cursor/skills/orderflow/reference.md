@@ -25,7 +25,7 @@ Dev secrets (Development log / `appsettings.Development.json` only):
 - Integration key: `ORDERFLOW-INTEGRATION-DEV-KEY-1b7e3c4a5d8f`
 - Demo license: `ORDERFLOW-DEVK-TEST` (Growth), seeded by Platform `SeedData.SeedOrderFlowAsync`
 
-Production: `Platform:IntegrationKey` and `Jwt:Key` via env / user secrets.
+Production: prefer env vars (`PLATFORM__INTEGRATIONKEY`, `JWT__KEY`, etc.) — see Configuration table below. User secrets are fine for local Development only.
 
 ## Plan limits (enforced in Domain `PlanQuota`)
 
@@ -55,6 +55,7 @@ Exception middleware maps:
 
 - `UnauthorizedAppException` → 401
 - `ConflictAppException` → 409
+- `ConcurrencyAppException` → 409 (or 409 with distinct code; client may retry)
 - `NotFoundAppException` → 404
 - `ForbiddenAppException` → 403
 - FluentValidation `ValidationException` → 400
@@ -69,7 +70,7 @@ Roles: `UserRole`. WhatsApp: `Disconnected` \| `Connected` \| `Error`.
 
 ## Domain (planned — add when that slice starts)
 
-- **Product** — sku, name, price GHS, stock qty, low-stock threshold, active
+- **Product** — sku, name, price GHS, stock qty, low-stock threshold, active, **concurrency token** (`Version` long or `RowVersion` byte[])
 - **StockMovement** — adjustments and reservations
 - **Customer** — shop’s WhatsApp end-customer (not Platform Customer)
 - **Order** — status `Pending \| Confirmed \| Paid \| Fulfilled \| Cancelled`, source `WhatsApp \| Manual`
@@ -77,6 +78,16 @@ Roles: `UserRole`. WhatsApp: `Disconnected` \| `Connected` \| `Error`.
 - **Payment** — Paystack reference, status, amount
 
 **Stock rule:** reserve on Confirmed, deduct on Paid, release on Cancelled. Pending WhatsApp drafts do not touch stock.
+
+**Optimistic concurrency (prevent overselling):** On stock deduction/reserve/release, the SQL update must be atomic, e.g.:
+
+```sql
+UPDATE Products
+SET Stock = Stock - @qty, Version = Version + 1
+WHERE Id = @id AND Stock >= @qty AND Version = @expectedVersion
+```
+
+If rows affected = 0, throw `ConcurrencyAppException` and notify the customer/shop to retry. Do not rely on read-modify-write alone.
 
 ## Application feature pattern
 
@@ -90,6 +101,10 @@ Features/{Name}/
 Register happens automatically via `AddMediatR` + `AddValidatorsFromAssembly`. Controllers send MediatR requests only.
 
 New external systems: interface in `Application/Common/Interfaces`, adapter in `Infrastructure/{Area}/`.
+
+## Shared DTOs
+
+`OrderFlow.Shared/DTOs` contains **public, external-facing contracts** used by the Angular frontend (e.g. `AuthResponse`, `ProductDto`, `OrderListDto`). Internal MediatR responses can be simple records or DTOs, but must not expose Domain entities directly. Use AutoMapper or explicit mapping (`ProductDto.FromEntity(product)`) inside the handler, not in the Controller.
 
 ## Frontend conventions
 
@@ -105,6 +120,11 @@ frontend/src/app/
 - `authGuard` on app shell, `guestGuard` on `/login`
 - JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`
 - Tailwind tokens: `forest`, `forest-dark`, `gold`, `paper`, `ink`; font Source Sans 3
+- **Signals:** `signal` for local component state; `toSignal` for HTTP observables. For cross-feature state (current shop, plan limits), injectable `StateService` with `signals` + `computed`. Do **not** bring NgRx or other external state managers into the MVP. Use `takeUntilDestroyed()` for automatic RxJS cleanup.
+
+## Logging
+
+Implement **Serilog** with `Destructure` / a custom `IDestructuringPolicy` to automatically redact `LicenseKey`, `Password`, and `IntegrationKey` from logs. In `Program.cs`, use `UseSerilog()`. Log to console in Development and to a file / Application Insights in Production. All external HTTP calls (Platform, Paystack, WhatsApp) log at `Information` with request/response sanitized. Never log plaintext license keys or integration keys.
 
 ## Ports and config
 
@@ -118,4 +138,21 @@ frontend/src/app/
 
 CORS origins: `Cors:Origins` (default `http://localhost:4200`).
 
-Testing environment: skip `MigrateAsync`; WebApplicationFactory uses InMemory + stub `IPlatformLicenseClient`.
+### Environment variable mapping
+
+Use `__` (double underscore) for nested .NET config (e.g. `Platform:BaseUrl` → `PLATFORM__BASEURL`).
+
+| Env Var | Required | Default | Used For |
+| :--- | :--- | :--- | :--- |
+| `ASPNETCORE_ENVIRONMENT` | No | Development | Environment detection |
+| `PLATFORM__BASEURL` | **Yes** | http://localhost:5176 | Platform API base |
+| `PLATFORM__INTEGRATIONKEY` | **Yes** | (Dev key) | X-Integration-Key header |
+| `JWT__KEY` | **Yes** | (Dev key) | Token signing (≥64 chars in prod) |
+| `CORS__ORIGINS` | No | http://localhost:4200 | Comma-separated allowed origins |
+| `ConnectionStrings__DefaultConnection` | **Yes** (non-Dev) | Docker compose value | PostgreSQL |
+
+## Testing strategy
+
+- **Unit tests:** xUnit, NSubstitute, FluentAssertions. Each command/query needs a handler unit test and a validator test. Mock `IPlatformLicenseClient` and other adapters.
+- **Integration tests:** **Testcontainers.PostgreSql** (not EF InMemory). InMemory does not enforce relational constraints and diverges from PostgreSQL. Cover the full HTTP pipeline (Auth → Controller → Handler → DB) with an ephemeral Postgres container in the test fixture.
+- Testing environment: skip host `MigrateAsync` as appropriate; apply migrations against the container; stub external HTTP clients.

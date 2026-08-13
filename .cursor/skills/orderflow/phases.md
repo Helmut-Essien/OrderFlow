@@ -15,15 +15,23 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 ## Slice 2 acceptance (when started)
 
 - CRUD products scoped to Shop; enforce `PlanQuota.MaxProducts`
-- Manual stock adjustment writes `StockMovement`
+- `Product` includes concurrency token (`Version` long or `RowVersion` byte[]) from creation
+- Manual stock adjustment writes `StockMovement` via **atomic** stock update (`Stock >= qty` + expected version); `rows affected = 0` → `ConcurrencyAppException`
 - Dashboard cards use real counts (sales may be 0 until slice 3)
 - Low-stock list on dashboard
-- Angular product list/edit, mobile-first
+- Angular product list/edit, mobile-first; Signals for list/form state
+
+## Slice 3 notes (stock)
+
+- Reserve on Confirmed, deduct on Paid, release on Cancelled (Pending WhatsApp drafts do not touch stock)
+- All reserve/deduct/release paths use the same optimistic concurrency SQL pattern as Slice 2
+- On concurrency failure after payment webhook: do not silently oversell — return/log failure and surface retry or compensating flow to the shop
 
 ## Slice 4 notes
 
 - One WhatsApp number per shop
 - Adapter `IWhatsAppClient` so BSP (Arkesel / 360dialog / Meta Cloud) can swap
+- **Before processing any incoming webhook**, verify the `X-Hub-Signature-256` header (Meta) or the BSP-specific signature. If verification fails, return HTTP 401 immediately. `IWhatsAppWebhookVerifier` lives in Application; implementation in Infrastructure.
 - Unmatched free-text → Pending order flagged needs-clarification + reply asking to use the menu
 - No AI in MVP
 

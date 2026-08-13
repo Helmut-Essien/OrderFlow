@@ -33,7 +33,7 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 
 | Layer | Technology | Status |
 |-------|------------|--------|
-| Frontend | Angular 19 standalone + Tailwind 3 | Auth + empty dashboard |
+| Frontend | Angular 19 standalone + Tailwind 3 + Signals | Auth + empty dashboard |
 | Backend | ASP.NET Core 9 Web API, MediatR, FluentValidation | Auth slice |
 | ORM | EF Core 9 + Npgsql | Active |
 | Database | PostgreSQL 16 (Docker, port 5433) | Active |
@@ -41,9 +41,11 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 | Auth | OrderFlow-issued JWT (not Platform JWT) | Active |
 | Passwords | BCrypt.Net-Next | Active |
 | License keys | SHA-256 lookup hash + Data Protection (never log plaintext) | Active |
+| Logging | Serilog + secret redaction | Adopt with Slice 2+ |
 | Platform | `IPlatformLicenseClient` → `X-Integration-Key` | Active |
-| WhatsApp | `IWhatsAppClient` (not implemented) | Later slice |
+| WhatsApp | `IWhatsAppClient` + webhook signature verify (not implemented) | Later slice |
 | Payments | `IPaymentGateway` / Paystack (not implemented) | Later slice |
+| Tests | xUnit, NSubstitute, FluentAssertions, Testcontainers.PostgreSql | Active / evolve off InMemory |
 
 ## Solution layout
 
@@ -68,11 +70,13 @@ Root namespaces match project names (`OrderFlow.Api`, `OrderFlow.Application`, �
 | Entities / invariants | `OrderFlow.Domain` | Api, Shared, frontend |
 | Use cases / handlers | `OrderFlow.Application/Features/{Feature}/` | Api, Infrastructure (except tests) |
 | Persistence, HTTP clients, JWT | `OrderFlow.Infrastructure` | Domain, Application implementations |
-| Request/response DTOs | `OrderFlow.Shared/DTOs/` | Domain entities exposed to HTTP |
+| Public HTTP contracts | `OrderFlow.Shared/DTOs/` | Domain entities exposed to HTTP |
 | Controllers / webhooks | `OrderFlow.Api` | Business rules |
 | UI | `frontend/src/app/features/` | Backend projects |
 
 Application depends on Domain + Shared only. Infrastructure implements Application interfaces. Api wires both.
+
+**DTOs vs responses:** `OrderFlow.Shared/DTOs` holds **public, external-facing contracts** used by the Angular frontend (e.g. `AuthResponse`, `ProductDto`, `OrderListDto`). Internal MediatR responses may be simple records, but must not expose Domain entities. Map with explicit `FromEntity` (or AutoMapper) **inside the handler**, not in the Controller.
 
 ## Security and tenancy
 
@@ -91,9 +95,13 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Private entity setters; factory methods (`Shop.Create`, `User.CreateOwner`)
 - Enums stored as PostgreSQL strings
 - Angular: standalone components, `inject()`, feature lazy routes, Tailwind utility classes
-- UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`
-- Tests required for new Application handlers; mock `IPlatformLicenseClient` and other adapters
+- Angular state: **Signals** (`signal`, `computed`, `toSignal`); injectable feature `StateService` for cross-feature state (shop, plan limits). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
+- UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
+- Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
+- Logging: Serilog with redaction of secrets (see [reference.md](reference.md))
+- Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters.
 - Commits only when the user asks; never commit production secrets
+- Config: nested settings via env `__` (e.g. `PLATFORM__BASEURL`) — full table in [reference.md](reference.md)
 
 ## Local development
 
