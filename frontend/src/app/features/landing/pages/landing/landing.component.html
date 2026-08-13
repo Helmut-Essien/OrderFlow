@@ -1,0 +1,336 @@
+<div class="min-h-full bg-paper text-ink">
+  <!-- Nav -->
+  <header class="sticky top-0 z-40 border-b border-[#E5E0D5]/80 bg-paper/90 backdrop-blur-md">
+    <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <a routerLink="/" class="of-headline-md text-forest tracking-tight" (click)="closeMenu()">
+        OrderFlow
+      </a>
+
+      <nav class="hidden items-center gap-8 lg:flex" aria-label="Primary">
+        <a href="#features" class="text-sm font-semibold tracking-wide text-slate-600 hover:text-forest transition-colors">Features</a>
+        <a href="#pricing" class="text-sm font-semibold tracking-wide text-slate-600 hover:text-forest transition-colors">Pricing</a>
+        <a href="#about" class="text-sm font-semibold tracking-wide text-slate-600 hover:text-forest transition-colors">About</a>
+        <a href="#contact" class="text-sm font-semibold tracking-wide text-slate-600 hover:text-forest transition-colors">Contact</a>
+      </nav>
+
+      <div class="hidden items-center gap-3 lg:flex">
+        @if (auth.isAuthenticated) {
+          <a
+            routerLink="/app"
+            class="inline-flex min-h-[44px] items-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold tracking-wide text-white hover:bg-forest-dark transition-colors">
+            Open dashboard
+          </a>
+        } @else {
+          <a
+            routerLink="/login"
+            class="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide text-forest hover:bg-forest/5 transition-colors">
+            Login
+          </a>
+          <a
+            routerLink="/login"
+            [queryParams]="{ mode: 'signup' }"
+            class="inline-flex min-h-[44px] items-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold tracking-wide text-white hover:bg-forest-dark transition-colors">
+            Get started
+          </a>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-forest hover:bg-forest/5 lg:hidden"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="mobile-nav"
+        aria-label="Toggle menu">
+        @if (menuOpen()) {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+            <path stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+            <path stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        }
+      </button>
+    </div>
+
+    @if (menuOpen()) {
+      <div id="mobile-nav" class="border-t border-[#E5E0D5] bg-paper px-4 py-4 lg:hidden">
+        <nav class="flex flex-col gap-1" aria-label="Mobile">
+          <a href="#features" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">Features</a>
+          <a href="#pricing" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">Pricing</a>
+          <a href="#about" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">About</a>
+          <a href="#contact" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">Contact</a>
+          <div class="mt-3 flex flex-col gap-2 border-t border-[#E5E0D5] pt-4">
+            @if (auth.isAuthenticated) {
+              <a
+                routerLink="/app"
+                class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-forest px-5 py-3 font-semibold text-white"
+                (click)="closeMenu()">
+                Open dashboard
+              </a>
+            } @else {
+              <a
+                routerLink="/login"
+                class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-forest px-5 py-3 font-semibold text-forest"
+                (click)="closeMenu()">
+                Login
+              </a>
+              <a
+                routerLink="/login"
+                [queryParams]="{ mode: 'signup' }"
+                class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-forest px-5 py-3 font-semibold text-white"
+                (click)="closeMenu()">
+                Get started
+              </a>
+            }
+          </div>
+        </nav>
+      </div>
+    }
+  </header>
+
+  <!-- Hero: full-bleed forest band -->
+  <section
+    class="relative overflow-hidden bg-forest text-white of-texture-grain of-texture-dots-on-forest"
+    aria-labelledby="hero-heading">
+    <div class="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:pb-24 lg:pt-20">
+      <div>
+        <p class="of-label text-gold">OrderFlow</p>
+        <h1 id="hero-heading" class="of-display mt-3 max-w-xl text-white">
+          Orders from WhatsApp. Stock you can trust.
+        </h1>
+        <p class="of-body-lg mt-5 max-w-md text-white/80">
+          Turn every chat into a confirmed sale — inventory, payments, and your shop dashboard in one warm workflow.
+        </p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          @if (auth.isAuthenticated) {
+            <a
+              routerLink="/app"
+              class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
+              Open dashboard
+            </a>
+          } @else {
+            <a
+              routerLink="/login"
+              [queryParams]="{ mode: 'signup' }"
+              class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
+              Get started
+            </a>
+            <a
+              routerLink="/login"
+              class="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-white/40 px-6 py-3 text-base font-semibold tracking-wide text-white hover:bg-white/10 transition-colors">
+              Login
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="relative mx-auto w-full max-w-lg lg:max-w-none">
+        <img
+          src="/assets/landing/hero-composition.svg"
+          alt=""
+          class="relative z-10 w-full of-float select-none pointer-events-none drop-shadow-lg"
+          width="640"
+          height="520"
+          decoding="async" />
+        <img
+          src="/assets/auth/whatsapp-bubbles.svg"
+          alt=""
+          class="absolute -left-2 top-6 w-24 sm:w-32 of-float-slow drop-shadow-md select-none pointer-events-none"
+          width="160"
+          height="120"
+          decoding="async" />
+        <img
+          src="/assets/auth/gold-spark.svg"
+          alt=""
+          class="absolute right-8 top-4 w-5 h-5 of-spark select-none pointer-events-none"
+          width="24"
+          height="24"
+          decoding="async" />
+        <img
+          src="/assets/auth/gold-spark.svg"
+          alt=""
+          class="absolute right-2 bottom-20 w-4 h-4 of-spark select-none pointer-events-none"
+          style="animation-delay: 0.9s"
+          width="24"
+          height="24"
+          decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+    <div class="max-w-2xl of-reveal">
+      <p class="of-label text-forest">Features</p>
+      <h2 class="of-headline-xl mt-3 text-ink">Built for shops that sell on WhatsApp</h2>
+      <p class="of-body-lg mt-3 text-slate-600">
+        One number, clear stock, and payments that feel native to how Ghanaian retailers already work.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-8 md:grid-cols-3">
+      <article class="of-reveal of-reveal-left" style="--of-reveal-delay: 60ms">
+        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <img src="/assets/landing/icon-whatsapp.svg" alt="" width="40" height="40" class="h-10 w-10" />
+        </div>
+        <h3 class="of-headline-md mt-5 text-ink">WhatsApp Ordering</h3>
+        <p class="mt-2 text-slate-600 leading-relaxed">
+          Customers order on your shop number. You confirm, reserve stock, and keep the conversation moving.
+        </p>
+      </article>
+
+      <article class="of-reveal" style="--of-reveal-delay: 140ms">
+        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <img src="/assets/landing/icon-inventory.svg" alt="" width="40" height="40" class="h-10 w-10" />
+        </div>
+        <h3 class="of-headline-md mt-5 text-ink">Smart Inventory</h3>
+        <p class="mt-2 text-slate-600 leading-relaxed">
+          Live quantities, low-stock signals, and concurrency-safe updates so you never oversell a crate.
+        </p>
+      </article>
+
+      <article class="of-reveal" style="--of-reveal-delay: 220ms">
+        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <img src="/assets/landing/icon-paystack.svg" alt="" width="40" height="40" class="h-10 w-10" />
+        </div>
+        <h3 class="of-headline-md mt-5 text-ink">Paystack payments</h3>
+        <p class="mt-2 text-slate-600 leading-relaxed">
+          Send payment links in GHS, mark orders Paid when Paystack confirms, and keep the books honest.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="border-y border-[#E5E0D5] bg-white/60 of-texture-lines">
+    <div class="mx-auto grid max-w-[1280px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24">
+      <div class="of-reveal-left">
+        <p class="of-label text-forest">About</p>
+        <h2 class="of-headline-xl mt-3 text-ink">Warm ops for Accra &amp; Kumasi shops</h2>
+        <p class="of-body-lg mt-4 text-slate-600">
+          OrderFlow is license-backed SaaS for small retailers — not a cold enterprise console.
+          Sign up with your Platform key, then run the day from a mobile-first dashboard.
+        </p>
+      </div>
+      <div class="relative of-reveal" style="--of-reveal-delay: 120ms">
+        <img
+          src="/assets/auth/messaging-fun.svg"
+          alt=""
+          class="mx-auto w-full max-w-md of-float-slow select-none pointer-events-none"
+          width="500"
+          height="500"
+          decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+    <div class="max-w-2xl of-reveal">
+      <p class="of-label text-forest">Pricing</p>
+      <h2 class="of-headline-xl mt-3 text-ink">Plans that match your license</h2>
+      <p class="of-body-lg mt-3 text-slate-600">
+        Limits come from your Platform plan name — enforced in OrderFlow, not marketing fiction.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-6 lg:grid-cols-3">
+      @for (plan of plans; track plan.name; let i = $index) {
+        <article
+          class="of-reveal rounded-xl border bg-white p-6 sm:p-8 shadow-[0_2px_8px_rgba(15,107,76,0.08)]"
+          [ngClass]="
+            plan.highlighted
+              ? 'border-forest ring-2 ring-forest/20'
+              : 'border-[#E5E0D5]'
+          "
+          [style.--of-reveal-delay]="i * 100 + 'ms'">
+          @if (plan.highlighted) {
+            <p class="of-label text-gold mb-3">Most shops choose</p>
+          }
+          <h3 class="of-headline-md text-ink">{{ plan.name }}</h3>
+          <p class="mt-2 text-slate-600">{{ plan.blurb }}</p>
+          <ul class="mt-6 space-y-3 text-sm text-ink">
+            <li class="flex gap-2"><span class="text-forest font-bold" aria-hidden="true">✓</span> {{ plan.products }}</li>
+            <li class="flex gap-2"><span class="text-forest font-bold" aria-hidden="true">✓</span> {{ plan.orders }}</li>
+            <li class="flex gap-2"><span class="text-forest font-bold" aria-hidden="true">✓</span> {{ plan.users }}</li>
+            <li class="flex gap-2"><span class="text-forest font-bold" aria-hidden="true">✓</span> {{ plan.ai }}</li>
+          </ul>
+          <a
+            routerLink="/login"
+            [queryParams]="{ mode: 'signup' }"
+            class="mt-8 inline-flex min-h-[44px] w-full items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold tracking-wide transition-colors"
+            [ngClass]="
+              plan.highlighted
+                ? 'bg-forest text-white hover:bg-forest-dark'
+                : 'border border-forest text-forest hover:bg-forest/5'
+            ">
+            Get started
+          </a>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- Contact / CTA band -->
+  <section
+    id="contact"
+    class="relative overflow-hidden bg-forest text-white of-texture-grain of-texture-dots-on-forest">
+    <div class="relative z-10 mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:flex lg:items-end lg:justify-between lg:gap-12 lg:px-8 lg:py-20">
+      <div class="of-reveal max-w-xl">
+        <p class="of-label text-gold">Contact</p>
+        <h2 class="of-headline-xl mt-3 text-white">Questions before you launch?</h2>
+        <p class="of-body-lg mt-3 text-white/80">
+          Reach us on WhatsApp for onboarding help. License keys come from Platform — we never ask for them in chat.
+        </p>
+      </div>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row of-reveal" style="--of-reveal-delay: 120ms">
+        <a
+          href="https://wa.me/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
+          WhatsApp support
+        </a>
+        <a
+          routerLink="/login"
+          [queryParams]="{ mode: 'signup' }"
+          class="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-white/40 px-6 py-3 text-base font-semibold tracking-wide text-white hover:bg-white/10 transition-colors">
+          Create your shop
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#E5E0D5] bg-paper">
+    <div class="mx-auto flex max-w-[1280px] flex-col gap-6 px-4 py-10 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <div>
+        <p class="text-lg font-bold text-forest">OrderFlow</p>
+        <p class="mt-1 text-sm text-slate-500">WhatsApp-native orders &amp; inventory for Ghana.</p>
+      </div>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600">
+        <a href="#features" class="hover:text-forest min-h-[44px] inline-flex items-center">Features</a>
+        <a href="#pricing" class="hover:text-forest min-h-[44px] inline-flex items-center">Pricing</a>
+        <a href="#" class="hover:text-forest min-h-[44px] inline-flex items-center">Privacy</a>
+        <a href="#" class="hover:text-forest min-h-[44px] inline-flex items-center">Terms</a>
+        <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="hover:text-forest min-h-[44px] inline-flex items-center">WhatsApp support</a>
+      </div>
+      <p class="text-sm text-slate-500">© {{ year }} OrderFlow</p>
+    </div>
+  </footer>
+
+  <!-- Mobile sticky CTA -->
+  @if (!auth.isAuthenticated) {
+    <div class="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5E0D5] bg-paper/95 p-3 backdrop-blur-md lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <a
+        routerLink="/login"
+        [queryParams]="{ mode: 'signup' }"
+        class="flex min-h-[48px] w-full items-center justify-center rounded-lg bg-forest text-base font-semibold tracking-wide text-white hover:bg-forest-dark transition-colors">
+        Get started
+      </a>
+    </div>
+    <div class="h-20 lg:hidden" aria-hidden="true"></div>
+  }
+</div>

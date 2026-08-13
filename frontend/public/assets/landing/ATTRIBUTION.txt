@@ -1,0 +1,2 @@
+Custom OrderFlow marketing assets (hero-composition.svg, icon-*.svg).
+Auth illustrations attribution: see ../auth/ATTRIBUTION.txt

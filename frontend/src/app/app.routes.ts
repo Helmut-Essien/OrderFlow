@@ -3,6 +3,11 @@ import { authGuard, guestGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
+    path: '',
+    loadChildren: () =>
+      import('./features/landing/routes').then((m) => m.LANDING_ROUTES)
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadChildren: () => import('./features/auth/routes').then((m) => m.AUTH_ROUTES)
@@ -20,6 +25,5 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '', pathMatch: 'full', redirectTo: 'app' },
-  { path: '**', redirectTo: 'app' }
+  { path: '**', redirectTo: '' }
 ];

@@ -168,6 +168,9 @@ frontend/src/app/
     auth/
       pages/login/    # Auth Gateway UI
       routes.ts
+    landing/
+      pages/landing/  # Marketing home at `/`
+      routes.ts
     dashboard/
       pages/dashboard/
       routes.ts
@@ -181,10 +184,10 @@ frontend/src/app/
 
 | Path | Guard | Loads |
 |------|-------|--------|
+| `/` | — | `features/landing/routes` (marketing) |
 | `/login` | `guestGuard` | `features/auth/routes` |
 | `/app` | `authGuard` | `core/layout/ShellComponent` |
 | `/app` (child `''`) | — | `features/dashboard/routes` |
-| `/` | — | redirect → `/app` |
 
 Future children under `/app`: `products`, `orders`, `settings` (add nav links in shell only when routes exist).
 

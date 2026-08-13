@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AUTH_FIELD_LIMITS } from '../../../../core/auth/auth.models';
 import {
@@ -24,6 +24,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly mode = signal<'login' | 'signup'>('login');
   readonly submitting = signal(false);
@@ -63,7 +64,10 @@ export class LoginComponent {
   });
 
   constructor() {
-    this.applyModeValidators('login');
+    const initialMode =
+      this.route.snapshot.queryParamMap.get('mode') === 'signup' ? 'signup' : 'login';
+    this.applyModeValidators(initialMode);
+    this.mode.set(initialMode);
   }
 
   setMode(mode: 'login' | 'signup'): void {

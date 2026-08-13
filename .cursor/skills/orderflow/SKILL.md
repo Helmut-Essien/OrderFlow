@@ -117,7 +117,7 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Shared DTOs: `[Required]` / `[StringLength]` / `[EmailAddress]` must match FluentValidation + EF `HasMaxLength`
 - Angular: standalone components, `inject()`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
 - Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/` (pipes, **validators**), `features/{name}/pages|data|routes` — see [reference.md](reference.md)
-- Angular routes: `/login` (guest), `/app` (auth shell + children); `/` redirects to `/app`
+- Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + children)
 - Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
 - Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).

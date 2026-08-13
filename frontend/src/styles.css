@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   height: 100%;
@@ -14,6 +18,48 @@ body {
 app-root {
   display: block;
   height: 100%;
+}
+
+/* ——— Typography scale (Source Sans 3) ——— */
+
+.of-display {
+  font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.of-headline-xl {
+  font-size: clamp(2rem, 4vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.of-headline-lg {
+  font-size: clamp(1.5rem, 3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.of-headline-md {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.of-body-lg {
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.of-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ——— Atmosphere (brand surfaces only) ——— */
@@ -40,6 +86,25 @@ app-root {
     transparent 0
   );
   background-size: 22px 22px;
+}
+
+.of-texture-dots {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(15, 23, 42, 0.06) 0.75px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}
+
+.of-texture-lines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.02) 3px,
+    rgba(0, 0, 0, 0.02) 4px
+  );
 }
 
 /* ——— Illustration motion ——— */
@@ -88,10 +153,51 @@ app-root {
   animation: of-spark 3.2s ease-in-out infinite;
 }
 
+/* ——— Scroll reveal ——— */
+
+.of-reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--of-reveal-delay, 0ms);
+}
+
+.of-reveal.of-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.of-reveal-left {
+  opacity: 0;
+  transform: translateX(-1.25rem);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--of-reveal-delay, 0ms);
+}
+
+.of-reveal-left.of-reveal-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .of-float,
   .of-float-slow,
   .of-spark {
     animation: none;
+  }
+
+  .of-reveal,
+  .of-reveal-left {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
