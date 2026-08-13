@@ -8,6 +8,8 @@ Design each screen for **mobile, tablet, and desktop** (same IA; escalate densit
 
 ## 1. Authentication Gateway
 
+**Route:** `/login` → `features/auth/pages/login`
+
 ### Purpose
 License-backed signup and day-to-day login for shop owners.
 
@@ -25,6 +27,7 @@ License-backed signup and day-to-day login for shop owners.
 - Signup only: license key, shop name, display name?, phone?
 - Login: email + password only
 - Trust: e.g. “Secure access for verified merchants.”
+- Success navigates to `/app`
 
 ---
 
@@ -53,16 +56,18 @@ Marketing convert → signup. Brand-forward, illustrated, warm.
 
 ## 3. Shop Dashboard
 
+**Route:** `/app` → shell + `features/dashboard/pages/dashboard`
+
 ### Purpose
 “What needs attention today?” — sales, WhatsApp backlog, low stock, recent orders.
 
 ### Structure
-- Header: title, search, notifications, avatar (desktop); bottom nav (mobile)
-- KPI row (3–4 white cards)
-- Low stock list + Recent orders (pills + chevron)
+- Chrome from `ShellComponent` (not page-local header)
+- KPI row (3–4 white cards); plan from `ShopStateService`
+- Low stock list + Recent orders (pills + chevron) when data exists
 
 ### Responsive
-- Mobile: stacked KPIs and lists
+- Mobile: stacked KPIs and lists; bottom nav
 - Desktop: sidebar + two-column body
 
 ### Data honesty
@@ -71,6 +76,8 @@ Zeros and “—” for unimplemented metrics; no decorative fake charts in MVP.
 ---
 
 ## 4. Inventory
+
+**Route (Slice 2):** `/app/products` → `features/products/`
 
 ### Purpose
 Browse/search products; jump to add/edit; spot low stock.
@@ -81,16 +88,19 @@ Browse/search products; jump to add/edit; spot low stock.
 - Table (desktop) / cards (mobile)
 - Columns: Product, SKU (mono ok), Category, Price GHS, Qty, Status, Actions
 - Pagination footer
+- `data/`: models mirroring `ProductDto` + `product.api.ts`
 
 ---
 
 ## 5. Add / Edit Product
 
+**Route (Slice 2):** `/app/products/new`, `/app/products/:id`
+
 ### Purpose
 Create or update one SKU for WhatsApp selling.
 
 ### Structure
-- Back to Inventory
+- Back to Inventory (`/app/products`)
 - Title + one support line
 - Upload zone + fields (name*, SKU+Generate, category, price GHS*, stock, low-stock threshold + helper)
 - Cancel | Save product (forest)

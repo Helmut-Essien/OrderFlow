@@ -30,17 +30,17 @@ Visual tokens + atmosphere: [orderflow-design-system](../orderflow-design-system
 | Tablet (`md`–`lg`) | Compact collapsible sidebar or top nav + drawer. Content denser; tables may still cardify. |
 | Desktop (`lg+`) | Fixed sidebar `w-64`, main `lg:ml-64`, max width 1280px, search + bell + avatar in header. |
 
-**Nav IA**
+**Nav IA** (implement links only for routes that exist)
 
 | Item | Route | Notes |
 |------|-------|-------|
-| Dashboard | `/` | Active: soft forest tint, bold |
-| Inventory | `/inventory` | |
-| Orders | `/orders` | Later slice |
-| Customers | `/customers` | Later slice |
-| Settings | `/settings` | Shop, WhatsApp, plan |
-| + New Order | action | **Gold** accent only |
-| Support / Logout | footer | |
+| Dashboard | `/app` | Active: soft forest tint / `bg-forest text-white` |
+| Inventory | `/app/products` | Slice 2+ |
+| Orders | `/app/orders` | Slice 3+ |
+| Customers | `/app/customers` | Later |
+| Settings | `/app/settings` | Slice 6 |
+| + New Order | action | **Gold** accent only (when orders exist) |
+| Support / Logout | footer | Logout → `/login` |
 
 ## Screen patterns
 
@@ -109,11 +109,15 @@ Prefer **illustrated gateway** over a bare centered card.
 
 ## Angular notes
 
-- Standalone, Tailwind, Signals — see orderflow skill
-- Features under `frontend/src/app/features/`
-- Shared layout in `core/` or `shared/layout/` once multi-page
-- Use `forest` / `gold` / `paper` / `ink`; atmosphere utilities from design-system [atmosphere.md](../orderflow-design-system/atmosphere.md)
-- Implement **mobile layout first**, then `md:` / `lg:` enhancements
+Structure and layering: [orderflow reference](../orderflow/reference.md) (Frontend conventions).
+
+- Shell: `core/layout/ShellComponent` under `/app` (sidebar `md+`, bottom nav mobile)
+- Pages: `features/{name}/pages/...`; feature `routes.ts` lazy-loaded
+- Shop/plan: `ShopStateService` — prefer over reading auth only in templates when sharing across features
+- Tokens: `forest` / `gold` / `paper` / `ink`; atmosphere from [atmosphere.md](../orderflow-design-system/atmosphere.md)
+- Currency pipe: `shared/pipes/ghsCurrency`
+- Mobile layout first, then `md:` / `lg:`
+- Do not add nav items for routes that do not exist yet
 
 ## Workflow
 

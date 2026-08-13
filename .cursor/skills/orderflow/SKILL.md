@@ -52,6 +52,10 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 ```
 OrderFlow.sln
 frontend/                          # Angular project name: frontend
+  src/app/
+    core/                          # cross-cutting (auth session, shell, shop state)
+    shared/                        # dumb UI (pipes, etc.)
+    features/                      # mirrors Application/Features + API areas
 backend/src/
   OrderFlow.Api/                   # Controllers, middleware, Program.cs
   OrderFlow.Application/           # Features, handlers, validators, interfaces
@@ -63,6 +67,18 @@ backend/tests/
 
 Root namespaces match project names (`OrderFlow.Api`, `OrderFlow.Application`, …). Do not rename `frontend` or the `backend/` folder.
 
+### Frontend ↔ API mapping
+
+| Backend | Angular |
+|---------|---------|
+| `Application/Features/{Name}/` | `features/{name}/` |
+| `Shared/DTOs/{Name}/*.cs` | `features/{name}/data/*.models.ts` (domain features) |
+| `Api/Controllers/{Name}Controller` | `features/{name}/data/*.api.ts` |
+| JWT / tenancy / session | `core/auth` + `core/shop` |
+| Domain entities | Never on the client |
+
+Auth is special: DTO models + HTTP live in `core/auth` because session is app-wide. Core must **not** import features.
+
 ## Strict layering
 
 | Type | Location | Never in |
@@ -72,7 +88,7 @@ Root namespaces match project names (`OrderFlow.Api`, `OrderFlow.Application`, �
 | Persistence, HTTP clients, JWT | `OrderFlow.Infrastructure` | Domain, Application implementations |
 | Public HTTP contracts | `OrderFlow.Shared/DTOs/` | Domain entities exposed to HTTP |
 | Controllers / webhooks | `OrderFlow.Api` | Business rules |
-| UI | `frontend/src/app/features/` | Backend projects |
+| UI | `frontend/src/app/features/` (+ `core/`, `shared/`) | Backend projects |
 
 Application depends on Domain + Shared only. Infrastructure implements Application interfaces. Api wires both.
 
@@ -94,8 +110,10 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Feature folders + MediatR commands/queries + FluentValidation
 - Private entity setters; factory methods (`Shop.Create`, `User.CreateOwner`)
 - Enums stored as PostgreSQL strings
-- Angular: standalone components, `inject()`, feature lazy routes, Tailwind utility classes
-- Angular state: **Signals** (`signal`, `computed`, `toSignal`); injectable feature `StateService` for cross-feature state (shop, plan limits). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
+- Angular: standalone components, `inject()`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
+- Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/`, `features/{name}/pages|data|routes` — see [reference.md](reference.md)
+- Angular routes: `/login` (guest), `/app` (auth shell + children); `/` redirects to `/app`
+- Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
 - Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))

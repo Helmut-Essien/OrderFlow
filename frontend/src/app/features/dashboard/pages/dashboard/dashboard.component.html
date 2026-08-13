@@ -1,0 +1,33 @@
+<div>
+  <h1 class="text-2xl font-bold text-ink md:text-3xl">Dashboard</h1>
+  <p class="mt-2 text-stone-600">
+    Welcome{{ auth.currentUser()?.displayName ? ', ' + auth.currentUser()?.displayName : '' }}.
+    This is the first slice: license-backed login. Products, orders, WhatsApp, and Paystack come next.
+  </p>
+
+  @if (shop.planUnrecognized()) {
+    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      Platform returned plan “{{ shop.plan()?.originalName }}”, which OrderFlow does not recognize yet.
+      Starter limits are applied until the plan name is mapped.
+    </div>
+  }
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <article class="rounded-xl border border-[#E5E0D5] bg-white p-4 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-sm text-stone-500">Plan</p>
+      <p class="mt-1 text-2xl font-bold">{{ shop.plan()?.name }}</p>
+    </article>
+    <article class="rounded-xl border border-[#E5E0D5] bg-white p-4 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-sm text-stone-500">Today’s sales</p>
+      <p class="mt-1 text-2xl font-bold">{{ 0 | ghsCurrency }}</p>
+    </article>
+    <article class="rounded-xl border border-[#E5E0D5] bg-white p-4 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-sm text-stone-500">Orders</p>
+      <p class="mt-1 text-2xl font-bold">0</p>
+    </article>
+    <article class="rounded-xl border border-[#E5E0D5] bg-white p-4 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-sm text-stone-500">Low stock</p>
+      <p class="mt-1 text-2xl font-bold">—</p>
+    </article>
+  </div>
+</div>

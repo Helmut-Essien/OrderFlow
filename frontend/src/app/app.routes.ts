@@ -5,12 +5,21 @@ export const routes: Routes = [
   {
     path: 'login',
     canActivate: [guestGuard],
-    loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent)
+    loadChildren: () => import('./features/auth/routes').then((m) => m.AUTH_ROUTES)
   },
   {
-    path: '',
+    path: 'app',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+    loadComponent: () =>
+      import('./core/layout/shell.component').then((m) => m.ShellComponent),
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./features/dashboard/routes').then((m) => m.DASHBOARD_ROUTES)
+      }
+    ]
   },
-  { path: '**', redirectTo: '' }
+  { path: '', pathMatch: 'full', redirectTo: 'app' },
+  { path: '**', redirectTo: 'app' }
 ];

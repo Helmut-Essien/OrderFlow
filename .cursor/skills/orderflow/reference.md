@@ -110,17 +110,45 @@ New external systems: interface in `Application/Common/Interfaces`, adapter in `
 
 ```
 frontend/src/app/
-  core/auth/          # AuthService, guards, interceptor, models
-  features/auth/      # sign in / sign up
-  features/dashboard/
+  core/
+    auth/             # AuthService, guards, interceptor, models, auth HTTP
+    layout/           # ShellComponent — desktop sidebar, mobile top/bottom nav
+    shop/             # ShopStateService (shopId, shopName, plan Signals)
+  shared/
+    pipes/            # ghsCurrency
+  features/           # mirrors Application/Features + API controllers
+    auth/
+      pages/login/    # Auth Gateway UI
+      routes.ts
+    dashboard/
+      pages/dashboard/
+      routes.ts
+    # Slice 2+: products/{ data/, pages/, routes.ts }
+    # Slice 3+: orders/{ data/, pages/, routes.ts }
+  app.routes.ts       # compose lazy feature routes
   environments/environment.ts   # apiUrl http://localhost:5180
 ```
 
-- Standalone components, lazy `loadComponent` routes
-- `authGuard` on app shell, `guestGuard` on `/login`
+### Routing
+
+| Path | Guard | Loads |
+|------|-------|--------|
+| `/login` | `guestGuard` | `features/auth/routes` |
+| `/app` | `authGuard` | `core/layout/ShellComponent` |
+| `/app` (child `''`) | — | `features/dashboard/routes` |
+| `/` | — | redirect → `/app` |
+
+Future children under `/app`: `products`, `orders`, `settings` (add nav links in shell only when routes exist).
+
+### Rules
+
+- Standalone components; each feature exports `ROUTES` / `AUTH_ROUTES` / `DASHBOARD_ROUTES` from `routes.ts`
 - JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`
 - Tailwind tokens: `forest`, `forest-dark`, `gold`, `paper`, `ink`; font Source Sans 3
-- **Signals:** `signal` for local component state; `toSignal` for HTTP observables. For cross-feature state (current shop, plan limits), injectable `StateService` with `signals` + `computed`. Do **not** bring NgRx or other external state managers into the MVP. Use `takeUntilDestroyed()` for automatic RxJS cleanup.
+- **Signals:** local UI in components; shop/plan in `ShopStateService` (updated by `AuthService` on login/me/logout). No NgRx. Use `takeUntilDestroyed()` for RxJS cleanup.
+- **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models for domain features. Auth HTTP stays in `core/auth`.
+- **DTO mirror:** TypeScript interfaces match `OrderFlow.Shared/DTOs` camelCase — never Domain entities.
+- When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav.
 
 ## Logging
 

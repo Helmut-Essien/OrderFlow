@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -52,7 +52,10 @@ export class LoginComponent {
       }
       this.submitting.set(true);
       this.auth.login({ email: value.email, password: value.password }).subscribe({
-        next: () => void this.router.navigateByUrl('/'),
+        next: () => {
+          this.submitting.set(false);
+          void this.router.navigateByUrl('/app');
+        },
         error: (err) => this.handleError(err)
       });
       return;
@@ -74,7 +77,10 @@ export class LoginComponent {
         password: value.password
       })
       .subscribe({
-        next: () => void this.router.navigateByUrl('/'),
+        next: () => {
+          this.submitting.set(false);
+          void this.router.navigateByUrl('/app');
+        },
         error: (err) => this.handleError(err)
       });
   }

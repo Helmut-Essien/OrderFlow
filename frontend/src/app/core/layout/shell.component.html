@@ -1,0 +1,61 @@
+<div class="min-h-full bg-paper text-ink">
+  <!-- Mobile top bar -->
+  <header class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#E5E0D5] bg-white px-4 md:hidden">
+    <div>
+      <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">OrderFlow</p>
+      <p class="text-sm font-bold text-forest">{{ shop.shopName() || 'Your shop' }}</p>
+    </div>
+    <button
+      type="button"
+      class="rounded-lg px-3 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100"
+      (click)="auth.logout()">
+      Sign out
+    </button>
+  </header>
+
+  <!-- Desktop sidebar -->
+  <aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-[#E5E0D5] bg-white md:flex">
+    <div class="border-b border-[#E5E0D5] px-5 py-6">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gold">OrderFlow</p>
+      <p class="mt-1 text-lg font-bold text-forest">{{ shop.shopName() || 'Your shop' }}</p>
+      <p class="mt-1 text-xs text-stone-500">{{ shop.plan()?.name || 'Plan' }}</p>
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-1 p-3">
+      <a
+        routerLink="/app"
+        routerLinkActive="bg-forest text-white"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="rounded-xl px-4 py-3 text-sm font-semibold text-stone-600 hover:bg-stone-100 hover:text-forest">
+        Dashboard
+      </a>
+    </nav>
+
+    <div class="border-t border-[#E5E0D5] p-3">
+      <button
+        type="button"
+        class="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-stone-600 hover:bg-stone-100 hover:text-forest"
+        (click)="auth.logout()">
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <div class="md:ml-64">
+    <main class="mx-auto max-w-[1280px] px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+      <router-outlet />
+    </main>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="fixed inset-x-0 bottom-0 z-30 flex border-t border-[#E5E0D5] bg-white md:hidden">
+    <a
+      routerLink="/app"
+      routerLinkActive="text-forest"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs font-semibold text-stone-500">
+      <span class="text-lg leading-none">⌂</span>
+      Dashboard
+    </a>
+  </nav>
+</div>
