@@ -1,0 +1,5 @@
+Illustrations from Storyset by Freepik (https://storyset.com)
+- messaging-fun.svg
+- order-confirmed.svg
+License: Freepik License — free for personal and commercial use with attribution.
+Custom assets (whatsapp-bubbles.svg, gold-spark.svg) created for OrderFlow.

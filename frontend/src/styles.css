@@ -10,3 +10,88 @@ body {
 body {
   @apply bg-paper font-sans text-ink antialiased;
 }
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+/* ——— Atmosphere (brand surfaces only) ——— */
+
+.of-texture-grain {
+  position: relative;
+  isolation: isolate;
+}
+
+.of-texture-grain::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+.of-texture-dots-on-forest {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.12) 0.75px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}
+
+/* ——— Illustration motion ——— */
+
+@keyframes of-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes of-float-delayed {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes of-spark {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08) rotate(12deg);
+  }
+}
+
+.of-float {
+  animation: of-float 4s ease-in-out infinite;
+}
+
+.of-float-slow {
+  animation: of-float-delayed 5.5s ease-in-out infinite;
+}
+
+.of-spark {
+  animation: of-spark 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .of-float,
+  .of-float-slow,
+  .of-spark {
+    animation: none;
+  }
+}
