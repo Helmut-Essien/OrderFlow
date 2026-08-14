@@ -1,17 +1,18 @@
 ---
 name: orderflow-design-system
 description: >-
-  OrderFlow visual design system: Forest/Gold/Paper tokens, Source Sans 3,
-  atmosphere textures (film grain, soft dot-mesh), elevation, buttons, cards,
-  forms, status chips, illustration flair. Use when styling Angular/Tailwind UI,
-  building components, marketing pages, auth, or brand/visual work.
+  OrderFlow visual design system: Forest/Gold/Paper tokens, Source Sans 3
+  (Fraunces display on landing headlines only), atmosphere textures (film grain,
+  soft dot-mesh), elevation, buttons, cards, forms, status chips, illustration
+  flair. Use when styling Angular/Tailwind UI, building components, marketing
+  pages, auth, or brand/visual work.
 ---
 
 # OrderFlow Design System
 
 **This skill is the visual source of truth** for Angular/Tailwind work. Stitch mocks are optional reference only when available.
 
-Implement in `frontend/` with **Tailwind 3** + **Source Sans 3**. Full token tables: [tokens.md](tokens.md). Atmosphere CSS recipes: [atmosphere.md](atmosphere.md). Screen/UX patterns: [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
+Implement in `frontend/` with **Tailwind 3** + **Source Sans 3** (Fraunces on landing headlines only). Full token tables: [tokens.md](tokens.md). Atmosphere CSS recipes: [atmosphere.md](atmosphere.md). Screen/UX patterns: [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
 
 ## Design intent
 
@@ -65,11 +66,13 @@ Recipes and utility class guidance → [atmosphere.md](atmosphere.md).
 
 ## Typography
 
-**Source Sans 3 only** (`font-sans`). Hierarchy via weight/size, not rainbow colors.
+**Source Sans 3** (`font-sans`) is the product typeface — app, auth, forms, tables. Hierarchy via weight/size, not rainbow colors.
+
+**Landing exception (`/` only):** marketing headlines may use **Fraunces** (`font-display`) — hero, section titles, feature/plan titles, and the wordmark. Body, labels, nav links, and CTAs stay Source Sans 3. Do **not** use Fraunces on auth, dashboard, or any `/app` screen.
 
 | Token | Size / weight | Use |
 |-------|---------------|-----|
-| `headline-xl` | 36px / 700 / -0.02em | Desktop page titles, landing hero |
+| `headline-xl` | 36px / 700 / -0.02em | Desktop page titles (app/auth) |
 | `headline-lg` | 28px / 700 | Section titles; sidebar brand |
 | `headline-lg-mobile` | 24px / 700 | Mobile titles |
 | `headline-md` | 22px / 600 | Cards, dialogs |
@@ -156,7 +159,7 @@ Fully rounded pills; soft tint bg + strong text.
 - Redesigning OrderFlow to look like Zof (navy, orange, console paths as primary UI)
 - Purple / indigo SaaS gradients, neon glow, multi-layer black shadows
 - Pure white full-page backgrounds
-- Gold on every control; serif display fonts
+- Gold on every control; serif display fonts in the product UI (landing marketing headlines are the exception)
 - Texture on data tables / dense forms (hurts scanability)
 - Dark mode as default
 
@@ -164,7 +167,7 @@ Fully rounded pills; soft tint bg + strong text.
 
 - [ ] Paper canvas + white cards
 - [ ] Forest primary / Gold reserved for accent CTAs
-- [ ] Source Sans 3 hierarchy
+- [ ] Source Sans 3 hierarchy (Fraunces display only on landing headlines)
 - [ ] Texture only on brand surfaces (if used)
 - [ ] 44px touch targets; mobile layout first
 - [ ] GHS formatting; status as pills

@@ -2,7 +2,7 @@
   <!-- Nav -->
   <header class="sticky top-0 z-40 border-b border-[#E5E0D5]/80 bg-paper/90 backdrop-blur-md">
     <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-      <a routerLink="/" class="of-headline-md text-forest tracking-tight" (click)="closeMenu()">
+      <a routerLink="/" class="of-lp-brand text-forest" (click)="closeMenu()">
         OrderFlow
       </a>
 
@@ -90,20 +90,25 @@
     }
   </header>
 
-  <!-- Hero: full-bleed forest band -->
+  <!-- Hero -->
   <section
     class="relative overflow-hidden bg-forest text-white of-texture-grain of-texture-dots-on-forest"
     aria-labelledby="hero-heading">
     <div class="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:pb-24 lg:pt-20">
       <div>
-        <p class="of-label text-gold">OrderFlow</p>
-        <h1 id="hero-heading" class="of-display mt-3 max-w-xl text-white">
-          Orders from WhatsApp. Stock you can trust.
+        <p class="of-label of-lp-eyebrow text-gold">OrderFlow</p>
+        <h1 id="hero-heading" class="of-lp-display mt-3 max-w-2xl text-white">
+          <span class="of-lp-line">
+            <span class="of-lp-line-inner">Orders from WhatsApp.</span>
+          </span>
+          <span class="of-lp-line">
+            <span class="of-lp-line-inner">Stock you can <em class="text-gold">trust</em>.</span>
+          </span>
         </h1>
-        <p class="of-body-lg mt-5 max-w-md text-white/80">
+        <p class="of-body-lg of-lp-lede mt-5 max-w-md text-white/80">
           Turn every chat into a confirmed sale — inventory, payments, and your shop dashboard in one warm workflow.
         </p>
-        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="of-lp-cta-row mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           @if (auth.isAuthenticated) {
             <a
               routerLink="/app"
@@ -126,36 +131,82 @@
         </div>
       </div>
 
-      <div class="relative mx-auto w-full max-w-lg lg:max-w-none">
-        <img
-          src="/assets/landing/hero-composition.svg"
-          alt=""
-          class="relative z-10 w-full of-float select-none pointer-events-none drop-shadow-lg"
-          width="640"
-          height="520"
-          decoding="async" />
-        <img
-          src="/assets/auth/whatsapp-bubbles.svg"
-          alt=""
-          class="absolute -left-2 top-6 w-24 sm:w-32 of-float-slow drop-shadow-md select-none pointer-events-none"
-          width="160"
-          height="120"
-          decoding="async" />
-        <img
-          src="/assets/auth/gold-spark.svg"
-          alt=""
-          class="absolute right-8 top-4 w-5 h-5 of-spark select-none pointer-events-none"
-          width="24"
-          height="24"
-          decoding="async" />
-        <img
-          src="/assets/auth/gold-spark.svg"
-          alt=""
-          class="absolute right-2 bottom-20 w-4 h-4 of-spark select-none pointer-events-none"
-          style="animation-delay: 0.9s"
-          width="24"
-          height="24"
-          decoding="async" />
+      <div
+        class="of-lp-stage"
+        (pointermove)="onStageMove($event)"
+        (pointerleave)="resetTilt()">
+        <div class="of-lp-glow" aria-hidden="true"></div>
+        <div class="of-lp-ground" aria-hidden="true"></div>
+        <div class="of-lp-scene" [style.transform]="sceneTransform()" aria-hidden="true">
+          <div class="of-lp-obj of-lp-obj--crate-a">
+            <div class="of-cube">
+              @for (face of cubeFaces; track face) {
+                <div class="of-cube__face" [ngClass]="'of-cube__' + face"></div>
+              }
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--crate-b">
+            <div class="of-cube of-cube--sm of-cube--delay">
+              @for (face of cubeFaces; track face) {
+                <div class="of-cube__face" [ngClass]="'of-cube__' + face"></div>
+              }
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--phone">
+            <div class="of-phone">
+              <div class="of-phone__side"></div>
+              <div class="of-phone__face of-phone__back"></div>
+              <div class="of-phone__face of-phone__front">
+                <div class="of-phone__notch"></div>
+                <div class="of-phone__row">
+                  <span class="of-phone__dot"></span>
+                  <span class="of-phone__bar w-16"></span>
+                </div>
+                <div class="of-phone__msg of-phone__msg--in">
+                  <span class="of-phone__line w-14"></span>
+                  <span class="of-phone__line w-9"></span>
+                </div>
+                <div class="of-phone__msg of-phone__msg--out">
+                  <span class="of-phone__line w-12"></span>
+                  <span class="of-phone__line w-8"></span>
+                </div>
+                <div class="of-phone__msg of-phone__msg--ok">
+                  <span class="of-phone__line w-16"></span>
+                  <span class="of-phone__paid">Paid · GHS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--card">
+            <div class="of-card3d">
+              <div class="of-card3d__row">
+                <span class="of-card3d__check">✓</span>
+                <div>
+                  <p class="of-card3d__title">Order confirmed</p>
+                  <p class="of-card3d__sub"></p>
+                </div>
+              </div>
+              <div class="of-card3d__chip"></div>
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--coin">
+            <div class="of-coin">
+              <div class="of-coin__face of-coin__front">₵</div>
+              @for (edge of coinEdges; track edge) {
+                <div
+                  class="of-coin__edge"
+                  [style.transform]="'rotateY(' + edge * 30 + 'deg) translateZ(calc(var(--coin) / 2))'"></div>
+              }
+              <div class="of-coin__face of-coin__back">₵</div>
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--spark-a">
+            <div class="of-spark3d"></div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--spark-b">
+            <div class="of-spark3d of-spark3d--late"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -164,38 +215,67 @@
   <section id="features" class="mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     <div class="max-w-2xl of-reveal">
       <p class="of-label text-forest">Features</p>
-      <h2 class="of-headline-xl mt-3 text-ink">Built for shops that sell on WhatsApp</h2>
+      <h2 class="of-lp-headline of-lp-words mt-3 text-ink">
+        <span style="--i: 0">Built</span>
+        <span style="--i: 1">for</span>
+        <span style="--i: 2">shops</span>
+        <span style="--i: 3">that</span>
+        <span style="--i: 4">sell</span>
+        <span style="--i: 5">on</span>
+        <span style="--i: 6">WhatsApp</span>
+      </h2>
       <p class="of-body-lg mt-3 text-slate-600">
         One number, clear stock, and payments that feel native to how Ghanaian retailers already work.
       </p>
     </div>
 
     <div class="mt-12 grid gap-8 md:grid-cols-3">
-      <article class="of-reveal of-reveal-left" style="--of-reveal-delay: 60ms">
-        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
-          <img src="/assets/landing/icon-whatsapp.svg" alt="" width="40" height="40" class="h-10 w-10" />
+      <article class="of-lp-feature of-reveal of-reveal-left" style="--of-reveal-delay: 60ms">
+        <div class="of-mini-stage rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <div class="of-mini-world">
+            <div class="of-bubble3d" aria-hidden="true"></div>
+          </div>
         </div>
-        <h3 class="of-headline-md mt-5 text-ink">WhatsApp Ordering</h3>
+        <p class="of-lp-kicker mt-5">01</p>
+        <h3 class="of-lp-title mt-1 text-ink">WhatsApp Ordering</h3>
         <p class="mt-2 text-slate-600 leading-relaxed">
           Customers order on your shop number. You confirm, reserve stock, and keep the conversation moving.
         </p>
       </article>
 
-      <article class="of-reveal" style="--of-reveal-delay: 140ms">
-        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
-          <img src="/assets/landing/icon-inventory.svg" alt="" width="40" height="40" class="h-10 w-10" />
+      <article class="of-lp-feature of-reveal" style="--of-reveal-delay: 140ms">
+        <div class="of-mini-stage rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <div class="of-mini-world">
+            <div class="of-cube of-cube--mini">
+              @for (face of cubeFaces; track face) {
+                <div class="of-cube__face" [ngClass]="'of-cube__' + face"></div>
+              }
+            </div>
+          </div>
         </div>
-        <h3 class="of-headline-md mt-5 text-ink">Smart Inventory</h3>
+        <p class="of-lp-kicker mt-5">02</p>
+        <h3 class="of-lp-title mt-1 text-ink">Smart Inventory</h3>
         <p class="mt-2 text-slate-600 leading-relaxed">
           Live quantities, low-stock signals, and concurrency-safe updates so you never oversell a crate.
         </p>
       </article>
 
-      <article class="of-reveal" style="--of-reveal-delay: 220ms">
-        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
-          <img src="/assets/landing/icon-paystack.svg" alt="" width="40" height="40" class="h-10 w-10" />
+      <article class="of-lp-feature of-reveal" style="--of-reveal-delay: 220ms">
+        <div class="of-mini-stage rounded-xl bg-white border border-[#E5E0D5] shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <div class="of-mini-world">
+            <div class="of-coin of-coin--sm">
+              <div class="of-coin__face of-coin__front">₵</div>
+              @for (edge of coinEdges; track edge) {
+                <div
+                  class="of-coin__edge"
+                  [style.transform]="'rotateY(' + edge * 30 + 'deg) translateZ(calc(var(--coin) / 2))'"></div>
+              }
+              <div class="of-coin__face of-coin__back">₵</div>
+            </div>
+          </div>
         </div>
-        <h3 class="of-headline-md mt-5 text-ink">Paystack payments</h3>
+        <p class="of-lp-kicker mt-5">03</p>
+        <h3 class="of-lp-title mt-1 text-ink">Paystack payments</h3>
         <p class="mt-2 text-slate-600 leading-relaxed">
           Send payment links in GHS, mark orders Paid when Paystack confirms, and keep the books honest.
         </p>
@@ -208,20 +288,65 @@
     <div class="mx-auto grid max-w-[1280px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24">
       <div class="of-reveal-left">
         <p class="of-label text-forest">About</p>
-        <h2 class="of-headline-xl mt-3 text-ink">Warm ops for Accra &amp; Kumasi shops</h2>
+        <h2 class="of-lp-headline of-lp-words mt-3 text-ink">
+          <span style="--i: 0">Warm</span>
+          <span style="--i: 1">ops</span>
+          <span style="--i: 2">for</span>
+          <span style="--i: 3">Accra</span>
+          <span style="--i: 4">&amp;</span>
+          <span style="--i: 5">Kumasi</span>
+          <span style="--i: 6">shops</span>
+        </h2>
         <p class="of-body-lg mt-4 text-slate-600">
           OrderFlow is license-backed SaaS for small retailers — not a cold enterprise console.
           Sign up with your Platform key, then run the day from a mobile-first dashboard.
         </p>
+        <p class="of-lp-kicker mt-6">Chat in. Stock reserved. Cedis home.</p>
       </div>
-      <div class="relative of-reveal" style="--of-reveal-delay: 120ms">
-        <img
-          src="/assets/auth/messaging-fun.svg"
-          alt=""
-          class="mx-auto w-full max-w-md of-float-slow select-none pointer-events-none"
-          width="500"
-          height="500"
-          decoding="async" />
+      <div class="of-about-stage of-reveal" style="--of-reveal-delay: 120ms" aria-hidden="true">
+        <div class="of-about-scene">
+          <div class="of-lp-obj" style="left: 12%; top: 28%; transform: translateZ(20px)">
+            <div class="of-cube">
+              @for (face of cubeFaces; track face) {
+                <div class="of-cube__face" [ngClass]="'of-cube__' + face"></div>
+              }
+            </div>
+          </div>
+          <div class="of-lp-obj" style="left: 38%; top: 8%; transform: translateZ(80px) scale(0.78)">
+            <div class="of-phone">
+              <div class="of-phone__side"></div>
+              <div class="of-phone__face of-phone__back"></div>
+              <div class="of-phone__face of-phone__front">
+                <div class="of-phone__notch"></div>
+                <div class="of-phone__row">
+                  <span class="of-phone__dot"></span>
+                  <span class="of-phone__bar w-16"></span>
+                </div>
+                <div class="of-phone__msg of-phone__msg--in" style="animation-delay: 0.2s; opacity: 1">
+                  <span class="of-phone__line w-14"></span>
+                  <span class="of-phone__line w-9"></span>
+                </div>
+                <div class="of-phone__msg of-phone__msg--out" style="animation-delay: 0.4s; opacity: 1">
+                  <span class="of-phone__line w-12"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="of-lp-obj" style="right: 8%; top: 42%; transform: translateZ(50px)">
+            <div class="of-coin">
+              <div class="of-coin__face of-coin__front">₵</div>
+              @for (edge of coinEdges; track edge) {
+                <div
+                  class="of-coin__edge"
+                  [style.transform]="'rotateY(' + edge * 30 + 'deg) translateZ(calc(var(--coin) / 2))'"></div>
+              }
+              <div class="of-coin__face of-coin__back">₵</div>
+            </div>
+          </div>
+          <div class="of-lp-obj of-lp-obj--spark-a" style="left: 8%; top: 12%">
+            <div class="of-spark3d"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -230,16 +355,22 @@
   <section id="pricing" class="mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     <div class="max-w-2xl of-reveal">
       <p class="of-label text-forest">Pricing</p>
-      <h2 class="of-headline-xl mt-3 text-ink">Plans that match your license</h2>
+      <h2 class="of-lp-headline of-lp-words mt-3 text-ink">
+        <span style="--i: 0">Plans</span>
+        <span style="--i: 1">that</span>
+        <span style="--i: 2">match</span>
+        <span style="--i: 3">your</span>
+        <span style="--i: 4">license</span>
+      </h2>
       <p class="of-body-lg mt-3 text-slate-600">
         Limits come from your Platform plan name — enforced in OrderFlow, not marketing fiction.
       </p>
     </div>
 
-    <div class="mt-12 grid gap-6 lg:grid-cols-3">
+    <div class="mt-12 grid gap-6 lg:grid-cols-3" style="perspective: 900px">
       @for (plan of plans; track plan.name; let i = $index) {
         <article
-          class="of-reveal rounded-xl border bg-white p-6 sm:p-8 shadow-[0_2px_8px_rgba(15,107,76,0.08)]"
+          class="of-lp-plan of-reveal rounded-xl border bg-white p-6 sm:p-8 shadow-[0_2px_8px_rgba(15,107,76,0.08)]"
           [ngClass]="
             plan.highlighted
               ? 'border-forest ring-2 ring-forest/20'
@@ -249,7 +380,7 @@
           @if (plan.highlighted) {
             <p class="of-label text-gold mb-3">Most shops choose</p>
           }
-          <h3 class="of-headline-md text-ink">{{ plan.name }}</h3>
+          <h3 class="of-lp-title text-ink">{{ plan.name }}</h3>
           <p class="mt-2 text-slate-600">{{ plan.blurb }}</p>
           <ul class="mt-6 space-y-3 text-sm text-ink">
             <li class="flex gap-2"><span class="text-forest font-bold" aria-hidden="true">✓</span> {{ plan.products }}</li>
@@ -277,10 +408,26 @@
   <section
     id="contact"
     class="relative overflow-hidden bg-forest text-white of-texture-grain of-texture-dots-on-forest">
+    <div class="of-contact-coin hidden lg:block" aria-hidden="true">
+      <div class="of-coin">
+        <div class="of-coin__face of-coin__front">₵</div>
+        @for (edge of coinEdges; track edge) {
+          <div
+            class="of-coin__edge"
+            [style.transform]="'rotateY(' + edge * 30 + 'deg) translateZ(calc(var(--coin) / 2))'"></div>
+        }
+        <div class="of-coin__face of-coin__back">₵</div>
+      </div>
+    </div>
     <div class="relative z-10 mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:flex lg:items-end lg:justify-between lg:gap-12 lg:px-8 lg:py-20">
       <div class="of-reveal max-w-xl">
         <p class="of-label text-gold">Contact</p>
-        <h2 class="of-headline-xl mt-3 text-white">Questions before you launch?</h2>
+        <h2 class="of-lp-headline of-lp-words mt-3 text-white">
+          <span style="--i: 0">Questions</span>
+          <span style="--i: 1">before</span>
+          <span style="--i: 2">you</span>
+          <span style="--i: 3">launch?</span>
+        </h2>
         <p class="of-body-lg mt-3 text-white/80">
           Reach us on WhatsApp for onboarding help. License keys come from Platform — we never ask for them in chat.
         </p>
@@ -307,7 +454,7 @@
   <footer class="border-t border-[#E5E0D5] bg-paper">
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6 px-4 py-10 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
       <div>
-        <p class="text-lg font-bold text-forest">OrderFlow</p>
+        <p class="of-lp-brand text-forest">OrderFlow</p>
         <p class="mt-1 text-sm text-slate-500">WhatsApp-native orders &amp; inventory for Ghana.</p>
       </div>
       <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600">

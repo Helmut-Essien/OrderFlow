@@ -20,7 +20,8 @@ app-root {
   height: 100%;
 }
 
-/* ——— Typography scale (Source Sans 3) ——— */
+/* ——— Typography scale (Source Sans 3 — product UI) ——— */
+/* Landing marketing headlines use Fraunces in landing.component.css */
 
 .of-display {
   font-size: clamp(2.5rem, 5.5vw, 3.75rem);

@@ -17,7 +17,8 @@ module.exports = {
         ink: "#1C1917"
       },
       fontFamily: {
-        sans: ['"Source Sans 3"', "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ['"Source Sans 3"', "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ['Fraunces', "Georgia", "serif"]
       }
     }
   },

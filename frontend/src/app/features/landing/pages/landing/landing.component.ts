@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  computed,
   inject,
   signal
 } from '@angular/core';
@@ -24,7 +25,11 @@ interface PlanCard {
   selector: 'app-landing',
   imports: [RouterLink, NgClass],
   templateUrl: './landing.component.html',
-  host: { class: 'block min-h-full' }
+  styleUrl: './landing.component.css',
+  host: {
+    class: 'block min-h-full',
+    '[class.of-lp-reduced]': 'reducedMotion()'
+  }
 })
 export class LandingComponent implements AfterViewInit, OnDestroy {
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -32,6 +37,17 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   readonly menuOpen = signal(false);
   readonly year = new Date().getFullYear();
+  readonly reducedMotion = signal(false);
+  readonly tiltX = signal(0);
+  readonly tiltY = signal(0);
+
+  readonly sceneTransform = computed(
+    () =>
+      `rotateX(${-12 + this.tiltX()}deg) rotateY(${-18 + this.tiltY()}deg)`
+  );
+
+  readonly cubeFaces = ['front', 'back', 'right', 'left', 'top', 'bottom'] as const;
+  readonly coinEdges = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   readonly plans: PlanCard[] = [
     {
@@ -70,6 +86,8 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
       typeof matchMedia !== 'undefined' &&
       matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    this.reducedMotion.set(reduced);
+
     const nodes = Array.from(
       this.host.nativeElement.querySelectorAll('.of-reveal, .of-reveal-left')
     ) as HTMLElement[];
@@ -96,6 +114,23 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
+  }
+
+  onStageMove(event: PointerEvent): void {
+    if (this.reducedMotion() || event.pointerType === 'touch') {
+      return;
+    }
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const nx = (event.clientX - rect.left) / rect.width - 0.5;
+    const ny = (event.clientY - rect.top) / rect.height - 0.5;
+    this.tiltX.set(ny * -10);
+    this.tiltY.set(nx * 14);
+  }
+
+  resetTilt(): void {
+    this.tiltX.set(0);
+    this.tiltY.set(0);
   }
 
   toggleMenu(): void {

@@ -91,6 +91,7 @@ Prefer **illustrated gateway** over a bare centered card.
 
 - Nav: Features, Pricing, About, Contact, Login, Get started
 - **Hero budget:** OrderFlow brand, one headline, one sentence, CTA group, one dominant illustrated visual with light motion + grain/dot-mesh on hero band
+- **Type:** Fraunces for hero / section / card titles and the wordmark; Source Sans 3 for body, labels, nav, CTAs
 - No hero clutter (no stat strips, floating promo stickers)
 - Features: WhatsApp, Inventory, Paystack — monoline icons or mini illustrations
 - Pricing: Starter / Growth / Business — limits from product skill

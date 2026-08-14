@@ -37,11 +37,12 @@ License-backed signup and day-to-day login for shop owners.
 Marketing convert → signup. Brand-forward, illustrated, warm.
 
 ### Hero (all devices)
-- OrderFlow as hero-level brand signal
+- OrderFlow as hero-level brand signal (Fraunces wordmark + display headline)
 - One headline, one sentence, primary + secondary CTA
 - Dominant illustration (animated-ready layers)
 - Grain/dot-mesh on hero band only
 - No floating promo badges on the art
+- Body / labels / CTAs remain Source Sans 3
 
 ### Below fold
 - Features: WhatsApp Ordering | Smart Inventory | Paystack payments
