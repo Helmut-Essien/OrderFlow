@@ -18,6 +18,7 @@ public sealed class SecretRedactingPolicy : IDestructuringPolicy
         "ProtectedLicenseKey"
     };
 
+    /// <summary>Replaces secret-named properties before Serilog writes the structure.</summary>
     public bool TryDestructure(
         object value,
         ILogEventPropertyValueFactory propertyValueFactory,

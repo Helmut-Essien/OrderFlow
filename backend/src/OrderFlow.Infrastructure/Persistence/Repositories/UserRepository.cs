@@ -10,13 +10,13 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
 {
     public Task<User?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        return db.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        return db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         // Login is anonymous; email is unique across shops so the tenant filter must not hide the row.
-        return db.Users.IgnoreQueryFilters()
+        return db.Users.AsNoTracking().IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
 

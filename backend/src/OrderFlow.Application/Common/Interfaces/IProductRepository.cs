@@ -13,9 +13,13 @@ public sealed record ProductListResult(IReadOnlyList<Product> Items, int TotalCo
 /// </summary>
 public interface IProductRepository
 {
+    /// <summary>Untracked read for GET/list mapping. Do not mutate the result.</summary>
     Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
 
-    /// <summary>Looks up by shop and already-normalized (uppercase) SKU.</summary>
+    /// <summary>Tracked load for catalog updates so <c>SaveChanges</c> persists <c>UpdateDetails</c>.</summary>
+    Task<Product?> GetTrackedByIdAsync(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>Untracked lookup by shop and already-normalized (uppercase) SKU.</summary>
     Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default);
 
     Task<ProductListResult> ListAsync(

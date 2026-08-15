@@ -8,17 +8,23 @@ namespace OrderFlow.Infrastructure.Persistence.Repositories;
 
 /// <summary>
 /// Product persistence. Stock changes go through <see cref="TryAdjustStockAsync"/> (atomic SQL), not a tracked entity update.
+/// List/get/dashboard reads are untracked; catalog updates use <see cref="GetTrackedByIdAsync"/>.
 /// </summary>
 public sealed class ProductRepository(AppDbContext db) : IProductRepository
 {
     public Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        return db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    }
+
+    public Task<Product?> GetTrackedByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         return db.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
     public Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default)
     {
-        return db.Products.FirstOrDefaultAsync(
+        return db.Products.AsNoTracking().FirstOrDefaultAsync(
             p => p.ShopId == shopId && p.Sku == sku,
             cancellationToken);
     }
@@ -31,12 +37,15 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = db.Products.AsQueryable().Where(p => p.ShopId == shopId);
+        var query = db.Products.AsNoTracking().Where(p => p.ShopId == shopId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim().ToLower();
-            query = query.Where(p => p.Name.ToLower().Contains(term) || p.Sku.ToLower().Contains(term));
+            // ILike keeps the expression sargable-friendly vs ToLower().Contains, which cannot use indexes.
+            var pattern = ToILikeContainsPattern(search);
+            query = query.Where(p =>
+                EF.Functions.ILike(p.Name, pattern, "\\") ||
+                EF.Functions.ILike(p.Sku, pattern, "\\"));
         }
 
         if (!string.IsNullOrWhiteSpace(category))
@@ -66,6 +75,7 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
         CancellationToken cancellationToken = default)
     {
         return await db.Products
+            .AsNoTracking()
             .Where(p => p.ShopId == shopId && p.Category != null)
             .Select(p => p.Category!)
             .Distinct()
@@ -78,6 +88,7 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
         CancellationToken cancellationToken = default)
     {
         return await db.Products
+            .AsNoTracking()
             .Where(p => p.ShopId == shopId && p.IsActive && p.Stock <= p.LowStockThreshold)
             .OrderBy(p => p.Stock)
             .ThenBy(p => p.Name)
@@ -122,6 +133,16 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
             db.Entry(tracked).State = EntityState.Detached;
 
         return new StockAdjustmentResult(row.Stock, row.Version);
+    }
+
+    /// <summary>Wraps user search in <c>%...%</c> and escapes LIKE wildcards so they are literal.</summary>
+    private static string ToILikeContainsPattern(string search)
+    {
+        var escaped = search.Trim()
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
+        return $"%{escaped}%";
     }
 
     private sealed class StockAdjustRow

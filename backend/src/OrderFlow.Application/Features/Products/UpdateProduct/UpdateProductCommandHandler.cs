@@ -21,7 +21,7 @@ public sealed class UpdateProductCommandHandler(
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))
             throw new UnauthorizedAppException("Not authenticated.");
 
-        var product = await products.GetByIdAsync(request.ProductId, cancellationToken)
+        var product = await products.GetTrackedByIdAsync(request.ProductId, cancellationToken)
             ?? throw new NotFoundAppException("Product not found.");
 
         if (product.Version != request.ExpectedVersion)

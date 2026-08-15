@@ -1,8 +1,8 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import { Subject, switchMap, EMPTY } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
 import { ShopStateService } from '../../../../core/shop/shop-state.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
@@ -13,11 +13,11 @@ import { PRODUCT_FIELD_LIMITS, ProductDto } from '../../data/product.models';
 @Component({
   selector: 'app-product-list',
   imports: [RouterLink, GhsCurrencyPipe],
-  templateUrl: './product-list.component.html'
+  templateUrl: './product-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductListComponent {
   private readonly api = inject(ProductApi);
-  private readonly destroyRef = inject(DestroyRef);
   readonly shop = inject(ShopStateService);
 
   readonly limits = PRODUCT_FIELD_LIMITS;
@@ -36,6 +36,8 @@ export class ProductListComponent {
   readonly error = signal<string | null>(null);
 
   private readonly searchInput$ = new Subject<string>();
+  /** Latest list request wins; in-flight HTTP is cancelled via switchMap. */
+  private readonly load$ = new Subject<void>();
 
   readonly rangeStart = computed(() => {
     if (this.totalCount() === 0) {
@@ -64,10 +66,42 @@ export class ProductListComponent {
       .subscribe((value) => {
         this.search.set(value);
         this.page.set(1);
-        this.load();
+        this.load$.next();
       });
 
-    this.load();
+    this.load$
+      .pipe(
+        switchMap(() => {
+          this.loading.set(true);
+          this.error.set(null);
+          return this.api
+            .list({
+              search: this.search(),
+              category: this.category() ?? undefined,
+              page: this.page(),
+              pageSize: this.pageSize
+            })
+            .pipe(
+              finalize(() => this.loading.set(false)),
+              catchError((err) => {
+                this.error.set(apiErrorMessage(err));
+                return EMPTY;
+              })
+            );
+        }),
+        takeUntilDestroyed()
+      )
+      .subscribe({
+        next: (result) => {
+          this.items.set(result.items);
+          this.totalCount.set(result.totalCount);
+          this.activeCount.set(result.activeCount ?? 0);
+          this.page.set(result.page);
+          this.categories.set(result.categories ?? []);
+        }
+      });
+
+    this.load$.next();
   }
 
   onSearch(event: Event): void {
@@ -78,7 +112,7 @@ export class ProductListComponent {
   selectCategory(category: string | null): void {
     this.category.set(category);
     this.page.set(1);
-    this.load();
+    this.load$.next();
   }
 
   previousPage(): void {
@@ -86,7 +120,7 @@ export class ProductListComponent {
       return;
     }
     this.page.update((p) => p - 1);
-    this.load();
+    this.load$.next();
   }
 
   nextPage(): void {
@@ -94,33 +128,6 @@ export class ProductListComponent {
       return;
     }
     this.page.update((p) => p + 1);
-    this.load();
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.api
-      .list({
-        search: this.search(),
-        category: this.category() ?? undefined,
-        page: this.page(),
-        pageSize: this.pageSize
-      })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.loading.set(false))
-      )
-      .subscribe({
-        next: (result) => {
-          this.items.set(result.items);
-          this.totalCount.set(result.totalCount);
-          this.activeCount.set(result.activeCount ?? 0);
-          this.page.set(result.page);
-          this.categories.set(result.categories ?? []);
-        },
-        error: (err) => this.error.set(apiErrorMessage(err))
-      });
+    this.load$.next();
   }
 }

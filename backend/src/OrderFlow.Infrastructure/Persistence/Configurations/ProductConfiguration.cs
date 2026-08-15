@@ -51,6 +51,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(p => new { p.ShopId, p.Sku }).IsUnique();
         builder.HasIndex(p => p.ShopId);
         builder.HasIndex(p => new { p.ShopId, p.Category });
+        // Dashboard low-stock and plan-cap counts filter active rows per shop.
+        builder.HasIndex(p => new { p.ShopId, p.IsActive });
 
         builder.HasOne(p => p.Shop)
             .WithMany()

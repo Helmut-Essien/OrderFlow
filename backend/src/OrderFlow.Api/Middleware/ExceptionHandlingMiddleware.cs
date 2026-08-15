@@ -10,6 +10,7 @@ namespace OrderFlow.Api.Middleware;
 /// </summary>
 public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
+    /// <summary>Catches the rest of the pipeline and writes a camelCase error body.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         try

@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,6 +20,7 @@ interface ApiValidationError {
   selector: 'app-login',
   imports: [ReactiveFormsModule],
   templateUrl: './login.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block h-full' }
 })
 export class LoginComponent {
@@ -26,6 +28,7 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly mode = signal<'login' | 'signup'>('login');
   readonly submitting = signal(false);
@@ -120,6 +123,7 @@ export class LoginComponent {
           email: value.email.trim().toLowerCase(),
           password: value.password
         })
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
             this.submitting.set(false);
@@ -148,6 +152,7 @@ export class LoginComponent {
         email: value.email.trim().toLowerCase(),
         password: value.password
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.submitting.set(false);

@@ -21,6 +21,7 @@ public sealed class ListProductsQueryHandler(
         var page = request.Page < 1 ? 1 : request.Page;
         var pageSize = request.PageSize is < 1 or > 100 ? 20 : request.PageSize;
 
+        // Sequential on purpose: one scoped DbContext is not safe for concurrent queries.
         var result = await products.ListAsync(shopId, request.Search, request.Category, page, pageSize, cancellationToken);
         var categories = await products.ListCategoriesAsync(shopId, cancellationToken);
         var activeCount = await products.CountByShopAsync(shopId, cancellationToken);

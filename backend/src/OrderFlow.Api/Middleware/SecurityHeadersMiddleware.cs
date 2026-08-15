@@ -5,6 +5,7 @@ namespace OrderFlow.Api.Middleware;
 /// </summary>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
+    /// <summary>Sets nosniff, DENY framing, no-store, and related browser headers.</summary>
     public Task InvokeAsync(HttpContext context)
     {
         var headers = context.Response.Headers;

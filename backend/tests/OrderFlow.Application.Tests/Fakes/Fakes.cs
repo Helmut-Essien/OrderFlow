@@ -87,6 +87,9 @@ internal sealed class FakeProductRepository : IProductRepository
     public Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         => Task.FromResult(Items.FirstOrDefault(p => p.Id == id));
 
+    public Task<Product?> GetTrackedByIdAsync(string id, CancellationToken cancellationToken = default)
+        => GetByIdAsync(id, cancellationToken);
+
     public Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default)
         => Task.FromResult(Items.FirstOrDefault(p => p.ShopId == shopId && p.Sku == sku));
 

@@ -10,7 +10,7 @@ public sealed class ShopRepository(AppDbContext db) : IShopRepository
 {
     public Task<Shop?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        return db.Shops.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        return db.Shops.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
     public Task<Shop?> GetByLicenseLookupHashAsync(
@@ -18,7 +18,7 @@ public sealed class ShopRepository(AppDbContext db) : IShopRepository
         CancellationToken cancellationToken = default)
     {
         // Signup is anonymous, so the shop filter would hide every row without this bypass.
-        return db.Shops.IgnoreQueryFilters()
+        return db.Shops.AsNoTracking().IgnoreQueryFilters()
             .FirstOrDefaultAsync(s => s.LicenseLookupHash == licenseLookupHash, cancellationToken);
     }
 

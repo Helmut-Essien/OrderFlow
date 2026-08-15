@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnDestroy,
@@ -27,6 +28,7 @@ interface PlanCard {
   imports: [RouterLink, NgClass],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'block min-h-full',
     '[class.of-lp-reduced]': 'reducedMotion()'
