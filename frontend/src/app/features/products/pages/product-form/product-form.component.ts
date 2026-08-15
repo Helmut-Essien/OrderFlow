@@ -79,6 +79,8 @@ export class ProductFormComponent {
   constructor() {
     const id = this.productId();
     if (id) {
+      // Stock is adjusted in a separate form; disable so hidden validators cannot block Save.
+      this.form.controls.stock.disable({ emitEvent: false });
       this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (product) => this.patchProduct(product),
         error: (err) => {
@@ -115,18 +117,15 @@ export class ProductFormComponent {
     this.form.markAllAsTouched();
     this.form.updateValueAndValidity();
 
-    if (this.isNew()) {
-      if (
-        this.form.controls.name.invalid ||
-        this.form.controls.sku.invalid ||
-        this.form.controls.category.invalid ||
-        this.form.controls.price.invalid ||
-        this.form.controls.stock.invalid ||
-        this.form.controls.lowStockThreshold.invalid
-      ) {
-        return;
-      }
-    } else if (this.form.invalid) {
+    const catalogInvalid =
+      this.form.controls.name.invalid ||
+      this.form.controls.sku.invalid ||
+      this.form.controls.category.invalid ||
+      this.form.controls.price.invalid ||
+      this.form.controls.lowStockThreshold.invalid ||
+      (this.isNew() && this.form.controls.stock.invalid);
+
+    if (catalogInvalid) {
       return;
     }
 
@@ -147,10 +146,7 @@ export class ProductFormComponent {
         })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: () => {
-            this.submitting.set(false);
-            void this.router.navigateByUrl('/app/products');
-          },
+          next: () => this.goToInventory(),
           error: (err) => this.handleSaveError(err)
         });
       return;
@@ -174,11 +170,8 @@ export class ProductFormComponent {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (product) => {
-          this.submitting.set(false);
-          this.patchProduct(product);
-          void this.router.navigateByUrl('/app/products');
-        },
+        // Do not patch the form first — signal writes in this tick can abort the navigation.
+        next: () => this.goToInventory(),
         error: (err) => this.handleSaveError(err)
       });
   }
@@ -222,6 +215,12 @@ export class ProductFormComponent {
           }
         }
       });
+  }
+
+  /** Leaves the form after a successful create/update so the list shows the saved SKU. */
+  private goToInventory(): void {
+    this.submitting.set(false);
+    void this.router.navigateByUrl('/app/products');
   }
 
   private patchProduct(product: ProductDto): void {
