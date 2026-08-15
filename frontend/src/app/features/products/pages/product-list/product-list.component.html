@@ -18,7 +18,7 @@
     } @else {
       <a
         routerLink="/app/products/new"
-        class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark">
+        class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark sm:w-auto">
         Add Product
       </a>
     }
@@ -42,10 +42,11 @@
     </label>
 
     @if (categories().length > 0) {
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+      <div class="-mx-4 overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0" role="group" aria-label="Filter by category">
+        <div class="flex w-max gap-2 md:w-auto md:flex-wrap">
         <button
           type="button"
-          class="min-h-[44px] rounded-full px-4 text-sm font-semibold"
+          class="min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold"
           [class.bg-forest]="category() === null"
           [class.text-white]="category() === null"
           [class.bg-white]="category() !== null"
@@ -58,7 +59,7 @@
         @for (chip of categories(); track chip) {
           <button
             type="button"
-            class="min-h-[44px] rounded-full px-4 text-sm font-semibold"
+            class="min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold"
             [class.bg-forest]="category() === chip"
             [class.text-white]="category() === chip"
             [class.bg-white]="category() !== chip"
@@ -69,6 +70,7 @@
             {{ chip }}
           </button>
         }
+        </div>
       </div>
     }
   </div>
@@ -88,8 +90,8 @@
       }
     </div>
   } @else {
-    <!-- Mobile cards -->
-    <ul class="mt-6 space-y-3 md:hidden">
+    <!-- Phone / tablet cards. Table from lg, matching the desktop sidebar. -->
+    <ul class="mt-6 space-y-3 lg:hidden">
       @for (product of items(); track product.id) {
         <li>
           <a
@@ -98,6 +100,9 @@
             <div class="min-w-0">
               <p class="font-semibold text-ink truncate">{{ product.name }}</p>
               <p class="mt-0.5 font-mono text-xs text-stone-500">{{ product.sku }}</p>
+              @if (product.category) {
+                <p class="mt-0.5 truncate text-xs text-stone-500">{{ product.category }}</p>
+              }
               <p class="mt-1 text-sm text-stone-600">{{ product.price | ghsCurrency }}</p>
             </div>
             <div class="flex shrink-0 flex-col items-end gap-1">
@@ -122,7 +127,7 @@
     </ul>
 
     <!-- Desktop table -->
-    <div class="mt-6 hidden overflow-hidden rounded-xl border border-[#E5E0D5] bg-white shadow-[0_2px_8px_rgba(15,107,76,0.08)] md:block">
+    <div class="mt-6 hidden overflow-hidden rounded-xl border border-[#E5E0D5] bg-white shadow-[0_2px_8px_rgba(15,107,76,0.08)] lg:block">
       <table class="w-full text-left text-sm">
         <thead class="border-b border-[#E5E0D5] bg-paper/60 text-xs font-semibold uppercase tracking-wider text-stone-500">
           <tr>

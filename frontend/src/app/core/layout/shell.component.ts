@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { ShopStateService } from '../shop/shop-state.service';
 
-/** Authenticated app chrome: desktop sidebar (`md+`) and mobile top/bottom nav. */
+/** Authenticated app chrome: desktop sidebar (`lg+`) and phone/tablet top + bottom nav. */
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],

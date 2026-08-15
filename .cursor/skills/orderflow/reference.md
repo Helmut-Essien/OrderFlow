@@ -191,7 +191,7 @@ Copy and tick when implementing a feature entity:
 frontend/src/app/
   core/
     auth/             # AuthService, guards, interceptor, models (+ AUTH_FIELD_LIMITS), auth HTTP
-    layout/           # ShellComponent — desktop sidebar, mobile top/bottom nav
+    layout/           # ShellComponent — sidebar lg+; top bar + bottom nav below lg (safe-area padded)
     shop/             # ShopStateService (shopId, shopName, plan Signals)
   shared/
     pipes/            # ghsCurrency
@@ -240,7 +240,8 @@ Future children under `/app`: `orders`, `settings` (add nav links in shell only 
 - **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models + `*_FIELD_LIMITS` for domain features. Auth HTTP + `AUTH_FIELD_LIMITS` stay in `core/auth`.
 - **DTO mirror:** TypeScript interfaces match `OrderFlow.Shared/DTOs` camelCase — never Domain entities. Limits constants must match Shared `[StringLength]` values.
 - **Form constraints:** never rely on API 400 alone; client validators + `maxlength` must match backend before submit.
-- When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav, apply the constraints checklist above.
+- When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav (bottom nav + sidebar, `lg` split), apply the constraints checklist above.
+- **Mobile layout:** follow [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md) — sidebar only at `lg+`, cards until `lg`, `w-full sm:w-auto` primary actions, `env(safe-area-inset-*)` on sticky/fixed chrome.
 - **Documentation:** JSDoc on exported feature APIs — see [documentation.md](documentation.md).
 
 ## Documentation conventions

@@ -2,10 +2,19 @@
 
 :host {
   --of-lp-serif: "Fraunces", Georgia, "Times New Roman", serif;
-  --cube: 72px;
-  --phone-w: 148px;
-  --phone-h: 268px;
-  --coin: 56px;
+  --cube: 56px;
+  --phone-w: 110px;
+  --phone-h: 198px;
+  --coin: 44px;
+}
+
+@media (min-width: 640px) {
+  :host {
+    --cube: 72px;
+    --phone-w: 148px;
+    --phone-h: 268px;
+    --coin: 56px;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -29,7 +38,7 @@
 .of-lp-display {
   font-family: var(--of-lp-serif);
   font-optical-sizing: auto;
-  font-size: clamp(2.75rem, 6.8vw, 4.5rem);
+  font-size: clamp(1.85rem, 8vw, 4.5rem);
   font-weight: 600;
   line-height: 1.04;
   letter-spacing: -0.03em;
@@ -196,10 +205,16 @@
 
 .of-lp-stage {
   position: relative;
-  height: 340px;
+  height: 240px;
   perspective: 1100px;
   perspective-origin: 50% 42%;
   touch-action: pan-y;
+}
+
+@media (min-width: 640px) {
+  .of-lp-stage {
+    height: 340px;
+  }
 }
 
 @media (min-width: 1024px) {

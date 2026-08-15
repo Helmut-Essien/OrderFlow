@@ -89,9 +89,12 @@ Optional: monospace for SKUs / order IDs (`font-mono` system stack) — not for 
 - Base unit **4px**; gutters **16px**; section gap **24px**
 - Margins: mobile **16px**, tablet **24px**, desktop **32px**
 - Max content width **1280px**
-- Breakpoints (Tailwind defaults): mobile `< md`, tablet `md–lg`, desktop `lg+`
+- Breakpoints (Tailwind defaults): phone `< md`, tablet `md–lg`, desktop `lg+`
+- **App chrome is `lg`, not `md`:** bottom nav + top bar below `lg`; sidebar `lg+`. Landscape phones must not get the desktop rail.
+- **Safe area:** `viewport-fit=cover`; pad sticky/fixed chrome with `env(safe-area-inset-top|bottom)`. Never a flush `bottom-0` bar on a notched phone.
 - Radius: inputs `rounded` (4–8px), cards `rounded-lg`–`rounded-xl`, pills `rounded-full`
-- Touch: interactive controls ≥ **44×44px**
+- Touch: interactive controls ≥ **44×44px**; primary CTAs `w-full sm:w-auto`
+- Marketing display type: `clamp()` minimum must still fit a 320px screen (do not lock a 2.75rem floor)
 
 ## Motion & illustration flair
 
@@ -117,7 +120,7 @@ Illustration subjects: WhatsApp chat → order confirmed, stock boxes, Paystack 
 | Accent | Gold + ink text | `New Order`, `Add Product` only |
 | Ghost | text / subtle hover | Header utilities |
 
-**Solid fills for buttons** — no gradients on CTAs. Atmospheric panels may use texture overlays.
+**Solid fills for buttons** — no gradients on CTAs. Atmospheric panels may use texture overlays. On the phone, primary/accent/secondary actions in a form footer are **full width** until `sm`.
 
 ### Cards
 

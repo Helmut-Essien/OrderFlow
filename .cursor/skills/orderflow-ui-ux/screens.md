@@ -14,14 +14,15 @@ Design each screen for **mobile, tablet, and desktop** (same IA; escalate densit
 License-backed signup and day-to-day login for shop owners.
 
 ### Mobile
-- Forest brand stack (wordmark, short value line, illustration cluster with light float animation)
+- Forest brand **`h-[42svh]`** so the Login sheet is on screen (not a tall illustration stack)
+- Compact wordmark/headline; smaller art; `min-h-dvh`; safe-area padding on brand top and form bottom
 - Atmosphere: grain + soft dots on forest zone
-- Sheet: Login | Sign up tabs, fields ≥44px, forest Sign in, trust line
+- Sheet: Login | Sign up tabs, fields ≥44px, **full-width** forest Sign in, trust line
 
 ### Tablet / Desktop
-- Split: illustrated forest panel | Paper form
-- Left: headline + floating WhatsApp/order/stock art + atmosphere textures
-- Right: white form card, underline tabs, forest CTA
+- Split from **`lg`**: illustrated forest panel | Paper form (`lg:w-[42%]` / rest)
+- Left: full headline + floating WhatsApp/order/stock art + atmosphere textures
+- Right: white form card, tabs, forest CTA
 
 ### Content rules
 - Signup only: license key, shop name, display name?, phone?
@@ -50,8 +51,10 @@ Marketing convert → signup. Brand-forward, illustrated, warm.
 - Footer: Privacy, Terms, WhatsApp support
 
 ### Responsive
-- Mobile: single column, sticky Get started
-- Desktop: nav links + side-by-side hero art
+- Mobile: single column, hamburger, sticky Get started with `env(safe-area-inset-bottom)` + spacer
+- Hero type: `clamp()` that **can shrink on a 320px phone** (minimum below 2.75rem)
+- 3D stage ~240px on phone, larger from `sm` / `lg`; scale `--phone-w` / `--cube` down on small screens
+- Desktop (`lg+`): nav links + side-by-side hero art
 
 ---
 
@@ -68,8 +71,8 @@ Marketing convert → signup. Brand-forward, illustrated, warm.
 - Low stock list + Recent orders (pills + chevron) when data exists
 
 ### Responsive
-- Mobile: stacked KPIs and lists; bottom nav
-- Desktop: sidebar + two-column body
+- Phone / tablet: stacked KPIs and lists; **shell** bottom nav (`< lg`)
+- Desktop (`lg+`): sidebar + two-column body
 
 ### Data honesty
 Zeros and “—” for unimplemented metrics; no decorative fake charts in MVP.
@@ -84,9 +87,9 @@ Zeros and “—” for unimplemented metrics; no decorative fake charts in MVP.
 Browse/search products; jump to add/edit; spot low stock.
 
 ### Structure
-- Title + gold Add Product
-- Search + category chips
-- Table (desktop) / cards (mobile)
+- Title + gold Add Product (`w-full` until `sm`)
+- Search + category chips (horizontal scroll on phone; wrap `md+`)
+- Cards until `lg` (include category); table from `lg`
 - Columns: Product, SKU (mono ok), Category, Price GHS, Qty, Status, Actions
 - Pagination footer
 - `data/`: models mirroring `ProductDto` + `product.api.ts`
@@ -107,8 +110,8 @@ Create or update one SKU for WhatsApp selling.
 - Cancel | Save product (forest)
 
 ### Responsive
-- Mobile: vertical stack
-- Desktop: two-pane upload | fields
+- Mobile: vertical stack; SKU + Generate stack until `sm`; Save/Cancel/Update **full-width** (`flex-col-reverse` so Save is first)
+- Desktop (`lg+`): two-pane upload | fields
 
 ---
 

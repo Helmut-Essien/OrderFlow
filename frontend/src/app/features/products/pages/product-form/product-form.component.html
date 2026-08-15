@@ -47,15 +47,15 @@
 
         <div>
           <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">SKU</span>
-          <div class="mt-1.5 flex gap-2">
+          <div class="mt-1.5 flex flex-col gap-2 sm:flex-row">
             <input
               formControlName="sku"
-              class="min-h-[44px] flex-1 rounded-lg border border-[#E5E0D5] bg-white px-3 py-2.5 font-mono text-ink placeholder:text-slate-400 focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+              class="min-h-[44px] min-w-0 flex-1 rounded-lg border border-[#E5E0D5] bg-white px-3 py-2.5 font-mono text-ink placeholder:text-slate-400 focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
               placeholder="VOLT-500"
               [attr.maxlength]="limits.sku" />
             <button
               type="button"
-              class="min-h-[44px] shrink-0 rounded-lg border border-forest px-4 text-sm font-semibold text-forest hover:bg-forest hover:text-white"
+              class="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg border border-forest px-4 text-sm font-semibold text-forest hover:bg-forest hover:text-white sm:w-auto"
               (click)="generateSkuFromName()">
               Generate
             </button>
@@ -150,12 +150,12 @@
         <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
           <a
             routerLink="/app/products"
-            class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-forest px-5 py-2.5 text-sm font-semibold text-forest hover:bg-paper">
+            class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-forest px-5 py-2.5 text-sm font-semibold text-forest hover:bg-paper sm:w-auto">
             Cancel
           </a>
           <button
             type="submit"
-            class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60"
+            class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60 sm:w-auto"
             [disabled]="submitting()">
             {{ submitting() ? 'Please wait…' : 'Save product' }}
           </button>
@@ -219,7 +219,7 @@
           </label>
           <button
             type="submit"
-            class="min-h-[44px] rounded-lg bg-forest px-5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60"
+            class="min-h-[44px] w-full rounded-lg bg-forest px-5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60 sm:w-auto"
             [disabled]="adjusting()">
             {{ adjusting() ? 'Please wait…' : 'Update stock' }}
           </button>

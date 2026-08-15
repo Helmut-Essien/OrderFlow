@@ -123,7 +123,7 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + dashboard), `/app/products`
 - Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
 - Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
-- UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
+- UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. App sidebar only at `lg+`; bottom nav + iOS safe areas below `lg`. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX / mobile rules → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
 - Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))
 - Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters. Test method names document behavior; comments only for non-obvious arrange/assert.
