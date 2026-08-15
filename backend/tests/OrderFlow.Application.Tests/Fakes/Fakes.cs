@@ -40,6 +40,11 @@ internal sealed class FakeUnitOfWork : IUnitOfWork
         SaveCount++;
         return Task.CompletedTask;
     }
+
+    public Task ExecuteInTransactionAsync(
+        Func<CancellationToken, Task> work,
+        CancellationToken cancellationToken = default)
+        => work(cancellationToken);
 }
 
 internal sealed class FakePlatformLicenseClient : IPlatformLicenseClient
@@ -109,7 +114,18 @@ internal sealed class FakeProductRepository : IProductRepository
     }
 
     public Task<int> CountByShopAsync(string shopId, CancellationToken cancellationToken = default)
-        => Task.FromResult(Items.Count(p => p.ShopId == shopId));
+        => Task.FromResult(Items.Count(p => p.ShopId == shopId && p.IsActive));
+
+    public Task<IReadOnlyList<string>> ListCategoriesAsync(
+        string shopId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<string>>(
+            Items
+                .Where(p => p.ShopId == shopId && !string.IsNullOrWhiteSpace(p.Category))
+                .Select(p => p.Category!)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(c => c, StringComparer.Ordinal)
+                .ToList());
 
     public Task<IReadOnlyList<Product>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default)
         => Task.FromResult<IReadOnlyList<Product>>(

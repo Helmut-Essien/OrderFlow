@@ -27,6 +27,7 @@ export class ProductListComponent {
 
   readonly items = signal<ProductDto[]>([]);
   readonly totalCount = signal(0);
+  readonly activeCount = signal(0);
   readonly page = signal(1);
   readonly search = signal('');
   readonly category = signal<string | null>(null);
@@ -51,10 +52,10 @@ export class ProductListComponent {
     Math.max(1, Math.ceil(this.totalCount() / this.pageSize))
   );
 
-  /** True when the shop has reached `PlanQuota.MaxProducts`; hide Add Product. */
+  /** True when active products have reached `PlanQuota.MaxProducts`; hide Add Product. */
   readonly atPlanLimit = computed(() => {
     const max = this.shop.plan()?.maxProducts;
-    return max != null && this.totalCount() >= max;
+    return max != null && this.activeCount() >= max;
   });
 
   constructor() {
@@ -115,25 +116,11 @@ export class ProductListComponent {
         next: (result) => {
           this.items.set(result.items);
           this.totalCount.set(result.totalCount);
+          this.activeCount.set(result.activeCount ?? 0);
           this.page.set(result.page);
-          this.mergeCategories(result.items);
+          this.categories.set(result.categories ?? []);
         },
         error: (err) => this.error.set(apiErrorMessage(err))
       });
-  }
-
-  private mergeCategories(items: ProductDto[]): void {
-    const next = new Set(this.categories());
-    for (const item of items) {
-      const category = item.category?.trim();
-      if (category) {
-        next.add(category);
-      }
-    }
-    const selected = this.category();
-    if (selected) {
-      next.add(selected);
-    }
-    this.categories.set([...next].sort((a, b) => a.localeCompare(b)));
   }
 }

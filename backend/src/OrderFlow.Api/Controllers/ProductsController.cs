@@ -6,7 +6,6 @@ using OrderFlow.Application.Features.Products.CreateProduct;
 using OrderFlow.Application.Features.Products.GetProduct;
 using OrderFlow.Application.Features.Products.ListProducts;
 using OrderFlow.Application.Features.Products.UpdateProduct;
-using OrderFlow.Shared.DTOs.Common;
 using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Api.Controllers;
@@ -19,9 +18,9 @@ namespace OrderFlow.Api.Controllers;
 [Route("api/products")]
 public class ProductsController(IMediator mediator) : ControllerBase
 {
-    /// <summary>Paged list. <paramref name="pageSize"/> is 1–100 (default 20). Search matches name or SKU.</summary>
+    /// <summary>Paged list. <paramref name="pageSize"/> is 1–100 (default 20). Search matches name or SKU. Categories are shop-wide.</summary>
     [HttpGet]
-    public async Task<ActionResult<PagedResult<ProductDto>>> List(
+    public async Task<ActionResult<ProductListResponse>> List(
         [FromQuery] string? search,
         [FromQuery] string? category,
         [FromQuery] int page = 1,
@@ -87,8 +86,8 @@ public class ProductsController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Manual stock adjustment via an atomic SQL update. Resulting stock cannot go below zero.</summary>
-    /// <response code="409">Stale version (<c>code: concurrency</c>) or stock would go negative.</response>
+    /// <summary>Manual stock adjustment via an atomic SQL update in the same transaction as the movement row.</summary>
+    /// <response code="409">Stale version (<c>code: concurrency</c>), stock would go negative, or stock would exceed the maximum.</response>
     [HttpPost("{id}/stock")]
     public async Task<ActionResult<ProductDto>> AdjustStock(
         string id,

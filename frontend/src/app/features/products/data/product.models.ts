@@ -67,6 +67,13 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
+/** Mirrors `ProductListResponse` — page envelope plus shop-wide chips and plan-cap count. */
+export interface ProductListResponse extends PagedResult<ProductDto> {
+  categories: string[];
+  /** Active products only; inactive SKUs do not consume a plan slot. */
+  activeCount: number;
+}
+
 /**
  * Builds an uppercase SKU from the product name, capped at {@link PRODUCT_FIELD_LIMITS.sku}.
  * The API also uppercases on save; this keeps the form in sync before submit.

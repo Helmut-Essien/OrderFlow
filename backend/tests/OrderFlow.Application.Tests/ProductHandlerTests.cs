@@ -105,6 +105,49 @@ public class ProductHandlerTests
         Assert.Contains("below zero", ex.Message);
     }
 
+    [Fact]
+    public async Task AdjustStock_ThrowsConflict_WhenStockWouldExceedMaximum()
+    {
+        var (_, products, movements, user) = SeedShop("Growth");
+        var product = Product.Create(user.ShopId!, "Voltic", "VOLT-500", null, 3.5m, ProductConstraints.MaxStock, 0);
+        products.Add(product);
+        var handler = new AdjustStockCommandHandler(user, products, movements, new FakeUnitOfWork());
+
+        var ex = await Assert.ThrowsAsync<ConflictAppException>(() =>
+            handler.Handle(new AdjustStockCommand(product.Id, 1, 1, null), CancellationToken.None));
+
+        Assert.Contains("exceed", ex.Message);
+    }
+
+    [Fact]
+    public async Task Create_AllowsNewProduct_WhenInactiveProductFreesPlanSlot()
+    {
+        var (shops, products, movements, user) = SeedShop("Starter");
+        for (var i = 0; i < 50; i++)
+        {
+            var item = Product.Create(user.ShopId!, $"Item {i}", $"SKU-{i:000}", null, 1m, 1, 0);
+            products.Add(item);
+        }
+
+        products.Items[0].UpdateDetails(
+            products.Items[0].Name,
+            products.Items[0].Sku,
+            products.Items[0].Category,
+            products.Items[0].Price,
+            products.Items[0].LowStockThreshold,
+            isActive: false);
+
+        var handler = new CreateProductCommandHandler(user, shops, products, movements, new FakeUnitOfWork());
+
+        var result = await handler.Handle(
+            new CreateProductCommand("Extra", "SKU-999", null, 1m, 0, 0),
+            CancellationToken.None);
+
+        Assert.Equal("SKU-999", result.Sku);
+        Assert.Equal(51, products.Items.Count);
+        Assert.Equal(50, products.Items.Count(p => p.IsActive));
+    }
+
     private static (FakeShopRepository Shops, FakeProductRepository Products, FakeStockMovementRepository Movements, FakeCurrentUser User)
         SeedShop(string planName)
     {

@@ -26,8 +26,11 @@ public interface IProductRepository
         int pageSize,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Active + inactive product count used to enforce <c>PlanQuota.MaxProducts</c>.</summary>
+    /// <summary>Active product count used to enforce <c>PlanQuota.MaxProducts</c>. Inactive SKUs do not consume a slot.</summary>
     Task<int> CountByShopAsync(string shopId, CancellationToken cancellationToken = default);
+
+    /// <summary>Distinct non-empty categories for the shop (all products, not just the current page).</summary>
+    Task<IReadOnlyList<string>> ListCategoriesAsync(string shopId, CancellationToken cancellationToken = default);
 
     /// <summary>Active products where stock is at or below the low-stock threshold (capped for dashboard).</summary>
     Task<IReadOnlyList<Product>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default);
@@ -36,7 +39,8 @@ public interface IProductRepository
 
     /// <summary>
     /// Atomically applies <paramref name="quantityDelta"/> when <c>Version</c> matches and resulting stock stays in range.
-    /// Returns null when no row was updated (stale version or insufficient stock).
+    /// Returns null when no row was updated (stale version, insufficient stock, or overflow).
+    /// Call inside <see cref="IUnitOfWork.ExecuteInTransactionAsync"/> when also inserting a <c>StockMovement</c>.
     /// </summary>
     Task<StockAdjustmentResult?> TryAdjustStockAsync(
         string productId,

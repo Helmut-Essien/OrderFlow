@@ -41,7 +41,7 @@ Useful when porting older Stitch HTML; map to Paper/white in product UI.
 
 ## Typography scale
 
-Product UI is **Source Sans 3**. Landing (`/`) headlines use **Fraunces** (`font-display`) — see [SKILL.md](SKILL.md#typography).
+Product UI is **Source Sans 3**. Landing (`/`) headlines use **Fraunces** (`font-display`) — see [SKILL.md](SKILL.md) (Typography).
 
 | Token | Size | Weight | Line height | Letter spacing |
 |-------|------|--------|-------------|----------------|

@@ -4,8 +4,8 @@ import { environment } from '../../../../environments/environment';
 import {
   AdjustStockRequest,
   CreateProductRequest,
-  PagedResult,
   ProductDto,
+  ProductListResponse,
   UpdateProductRequest
 } from './product.models';
 
@@ -20,7 +20,7 @@ export class ProductApi {
 
   /**
    * Lists products for the current shop.
-   * @param options `pageSize` is 1–100 (API default 20).
+   * @param options `pageSize` is 1–100 (API default 20). Categories and `activeCount` are shop-wide.
    */
   list(options: {
     search?: string;
@@ -42,7 +42,7 @@ export class ProductApi {
       params = params.set('category', category);
     }
 
-    return this.http.get<PagedResult<ProductDto>>(this.baseUrl, { params });
+    return this.http.get<ProductListResponse>(this.baseUrl, { params });
   }
 
   /** Loads one product. Other shops' ids return 404. */

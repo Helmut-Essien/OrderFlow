@@ -6,7 +6,7 @@
         Products customers can order on WhatsApp.
         @if (shop.plan()?.maxProducts != null) {
           <span class="text-stone-500">
-            {{ totalCount() }} / {{ shop.plan()?.maxProducts }} on {{ shop.plan()?.name }}.
+            {{ activeCount() }} / {{ shop.plan()?.maxProducts }} on {{ shop.plan()?.name }}.
           </span>
         }
       </p>

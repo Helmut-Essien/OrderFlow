@@ -20,4 +20,21 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
                 "This product was updated by someone else. Refresh and try again.");
         }
     }
+
+    public async Task ExecuteInTransactionAsync(
+        Func<CancellationToken, Task> work,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await work(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }

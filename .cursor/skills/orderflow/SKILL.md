@@ -14,7 +14,7 @@ description: >-
 
 # OrderFlow
 
-Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana. License entitlement lives in the **Platform** hub (`../platform`). OrderFlow calls only `POST /api/licenses/validate`.
+Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana. License entitlement lives in the **Platform** hub (`../platform`). OrderFlow calls only `POST /api/licenses/validate`. Companion files: [phases.md](phases.md), [reference.md](reference.md), [documentation.md](documentation.md).
 
 ## Vision
 
@@ -31,9 +31,9 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 2. **Ask for confirmation** before the next slice.
 3. No placeholders (`// TODO`, `// add logic here`).
 4. External setup (Postgres, Platform) → `docker-compose` or clear notes in [README.md](../../../README.md).
-5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, frontend conventions, and documentation comments.
-6. **Constraints are full-stack** — any new/changed field limit, requiredness, enum set, or normalization ships in the **same slice** on Domain + EF + FluentValidation + Shared DTOs **and** Angular (limits constant, validators, `maxlength`, submit normalize). Never leave backend-only or frontend-only constraints. Checklist: [reference.md](reference.md#constraints-full-stack).
-7. **Document generated code** — public C# APIs get XML (`///`) docs; exported Angular APIs get JSDoc (`/** */`). Inline comments explain **why** (invariants, tenancy, concurrency, security), never the next obvious line. Details: [reference.md](reference.md#documentation-conventions).
+5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, and frontend conventions. See [documentation.md](documentation.md) for XML/JSDoc rules.
+6. **Constraints are full-stack** — any new/changed field limit, requiredness, enum set, or normalization ships in the **same slice** on Domain + EF + FluentValidation + Shared DTOs **and** Angular (limits constant, validators, `maxlength`, submit normalize). Never leave backend-only or frontend-only constraints. Checklist: [reference.md](reference.md).
+7. **Document generated code** — public C# APIs get XML (`///`) docs; exported Angular APIs get JSDoc (`/** */`). Inline comments explain **why** (invariants, tenancy, concurrency, security), never the next obvious line. Details: [documentation.md](documentation.md).
 
 ## Technology stack
 
@@ -127,7 +127,7 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))
 - Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters. Test method names document behavior; comments only for non-obvious arrange/assert.
-- **Documentation:** XML on public C# types/members; JSDoc on exported TypeScript. Document exceptions, plan limits, Shop tenancy, and concurrency. Do not narrate obvious code or leave commented-out dead code. Full rules: [reference.md](reference.md#documentation-conventions).
+- **Documentation:** XML on public C# types/members; JSDoc on exported TypeScript. Document exceptions, plan limits, Shop tenancy, and concurrency. Do not narrate obvious code or leave commented-out dead code. Full rules: [documentation.md](documentation.md).
 - Commits only when the user asks; never commit production secrets
 - Config: nested settings via env `__` (e.g. `PLATFORM__BASEURL`) — full table in [reference.md](reference.md)
 

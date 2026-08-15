@@ -1,38 +1,38 @@
 using MediatR;
 using OrderFlow.Application.Common.Exceptions;
 using OrderFlow.Application.Common.Interfaces;
-using OrderFlow.Shared.DTOs.Common;
 using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Application.Features.Products.ListProducts;
 
-/// <summary>Lists products for the JWT shop. Search matches name or SKU; results are tenant-filtered in the repository.</summary>
+/// <summary>
+/// Lists products for the JWT shop. Categories and active count are shop-wide so chips and plan caps stay accurate across pages.
+/// </summary>
 public sealed class ListProductsQueryHandler(
     ICurrentUser currentUser,
-    IProductRepository products) : IRequestHandler<ListProductsQuery, PagedResult<ProductDto>>
+    IProductRepository products) : IRequestHandler<ListProductsQuery, ProductListResponse>
 {
-    public async Task<PagedResult<ProductDto>> Handle(ListProductsQuery request, CancellationToken cancellationToken)
+    public async Task<ProductListResponse> Handle(ListProductsQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))
             throw new UnauthorizedAppException("Not authenticated.");
 
+        var shopId = currentUser.ShopId;
         var page = request.Page < 1 ? 1 : request.Page;
         var pageSize = request.PageSize is < 1 or > 100 ? 20 : request.PageSize;
 
-        var result = await products.ListAsync(
-            currentUser.ShopId,
-            request.Search,
-            request.Category,
-            page,
-            pageSize,
-            cancellationToken);
+        var result = await products.ListAsync(shopId, request.Search, request.Category, page, pageSize, cancellationToken);
+        var categories = await products.ListCategoriesAsync(shopId, cancellationToken);
+        var activeCount = await products.CountByShopAsync(shopId, cancellationToken);
 
-        return new PagedResult<ProductDto>
+        return new ProductListResponse
         {
             Items = result.Items.Select(ProductMapping.ToDto).ToList(),
             TotalCount = result.TotalCount,
             Page = page,
-            PageSize = pageSize
+            PageSize = pageSize,
+            Categories = categories,
+            ActiveCount = activeCount
         };
     }
 }

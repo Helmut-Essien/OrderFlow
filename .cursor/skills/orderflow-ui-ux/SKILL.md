@@ -124,7 +124,7 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Forms: reactive forms; `[attr.maxlength]` + inline errors for every limited field; trim / lowercase email on submit
 - Mobile layout first, then `md:` / `lg:`
 - Do not add nav items for routes that do not exist yet
-- **Document generated UI code** — JSDoc on exported services, models, pipes, validators, and non-obvious component public APIs; template comments only for layout/a11y intent that classes do not make obvious. Full rules: [orderflow documentation conventions](../orderflow/reference.md#documentation-conventions).
+- **Document generated UI code** — JSDoc on exported services, models, pipes, validators, and non-obvious component public APIs; template comments only for layout/a11y intent that classes do not make obvious. Full rules: [documentation.md](../orderflow/documentation.md).
 
 ## Workflow
 
@@ -132,8 +132,8 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 2. Apply [orderflow-design-system](../orderflow-design-system/SKILL.md)
 3. Mobile → tablet → desktop
 4. Real API data; honest empties
-5. If the screen writes data: apply [orderflow constraints checklist](../orderflow/reference.md#constraints-full-stack) with the API in the same slice
-6. Document new/changed public TypeScript APIs (JSDoc) and non-obvious template structure
+5. If the screen writes data: apply the constraints checklist in [orderflow reference](../orderflow/reference.md) with the API in the same slice
+6. Document new/changed public TypeScript APIs per [documentation.md](../orderflow/documentation.md) and non-obvious template structure
 7. One slice; ask before the next
 
 ## Anti-patterns

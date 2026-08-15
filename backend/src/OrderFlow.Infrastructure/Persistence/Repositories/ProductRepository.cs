@@ -58,7 +58,19 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
 
     public Task<int> CountByShopAsync(string shopId, CancellationToken cancellationToken = default)
     {
-        return db.Products.CountAsync(p => p.ShopId == shopId, cancellationToken);
+        return db.Products.CountAsync(p => p.ShopId == shopId && p.IsActive, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> ListCategoriesAsync(
+        string shopId,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.Products
+            .Where(p => p.ShopId == shopId && p.Category != null)
+            .Select(p => p.Category!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<Product>> GetLowStockAsync(
