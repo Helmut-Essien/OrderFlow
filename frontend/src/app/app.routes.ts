@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 
+/** Root routes: landing `/`, guest `/login`, authenticated `/app` shell with lazy feature children. */
 export const routes: Routes = [
   {
     path: '',
@@ -22,6 +23,11 @@ export const routes: Routes = [
         path: '',
         loadChildren: () =>
           import('./features/dashboard/routes').then((m) => m.DASHBOARD_ROUTES)
+      },
+      {
+        path: 'products',
+        loadChildren: () =>
+          import('./features/products/routes').then((m) => m.PRODUCT_ROUTES)
       }
     ]
   },

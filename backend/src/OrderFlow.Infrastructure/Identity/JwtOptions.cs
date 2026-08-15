@@ -1,5 +1,6 @@
 namespace OrderFlow.Infrastructure.Identity;
 
+/// <summary>JWT settings from config section <c>Jwt</c> (env <c>JWT__*</c>). Production key must be ≥ 64 characters.</summary>
 public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";

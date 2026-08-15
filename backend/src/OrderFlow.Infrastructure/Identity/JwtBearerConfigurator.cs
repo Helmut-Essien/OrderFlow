@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace OrderFlow.Infrastructure.Identity;
 
+/// <summary>Binds JWT bearer validation from <see cref="JwtOptions"/>. HTTPS metadata is required only in Production.</summary>
 internal sealed class JwtBearerConfigurator(
     IOptions<JwtOptions> jwt,
     IHostEnvironment environment) : IConfigureNamedOptions<JwtBearerOptions>

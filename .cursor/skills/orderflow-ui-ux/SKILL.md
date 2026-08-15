@@ -4,8 +4,10 @@ description: >-
   OrderFlow UI/UX: mobile-first responsive shells, Auth Gateway with illustrated
   brand panel, dashboard, inventory, product forms, landing with motion flair,
   atmosphere textures. Form field limits and validators must mirror backend
-  Shared DTOs in the same slice. Use when building Angular pages, navigation,
-  forms, tables, empty states, or marketing UI.
+  Shared DTOs in the same slice. Generated Angular code must be documented with
+  JSDoc and comments that follow best standards (why, not what). Use when
+  building Angular pages, navigation, forms, tables, empty states, or marketing
+  UI.
 ---
 
 # OrderFlow UI/UX
@@ -122,6 +124,7 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Forms: reactive forms; `[attr.maxlength]` + inline errors for every limited field; trim / lowercase email on submit
 - Mobile layout first, then `md:` / `lg:`
 - Do not add nav items for routes that do not exist yet
+- **Document generated UI code** — JSDoc on exported services, models, pipes, validators, and non-obvious component public APIs; template comments only for layout/a11y intent that classes do not make obvious. Full rules: [orderflow documentation conventions](../orderflow/reference.md#documentation-conventions).
 
 ## Workflow
 
@@ -130,7 +133,8 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 3. Mobile → tablet → desktop
 4. Real API data; honest empties
 5. If the screen writes data: apply [orderflow constraints checklist](../orderflow/reference.md#constraints-full-stack) with the API in the same slice
-6. One slice; ask before the next
+6. Document new/changed public TypeScript APIs (JSDoc) and non-obvious template structure
+7. One slice; ask before the next
 
 ## Anti-patterns
 
@@ -142,3 +146,4 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Desktop-only layouts
 - Client forms without max length / requiredness that the API already enforces
 - Hard-coding field limits in the template instead of a shared `*_FIELD_LIMITS` constant
+- Shipping undocumented public TypeScript APIs, or commenting every line of a template

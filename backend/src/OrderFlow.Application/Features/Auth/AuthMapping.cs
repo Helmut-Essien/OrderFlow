@@ -5,6 +5,7 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Application.Features.Auth;
 
+/// <summary>Maps domain user/shop/plan to public auth DTOs inside handlers, never in the controller.</summary>
 internal static class AuthMapping
 {
     public static AuthResponse ToAuthResponse(JwtTokenResult token, User user, Shop shop, PlanQuota plan)

@@ -9,11 +9,17 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Api.Controllers;
 
+/// <summary>
+/// Shop signup, login, and session. Rate-limited to 20 requests/minute. License keys are accepted only on signup.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
 [EnableRateLimiting("auth")]
 public class AuthController(IMediator mediator) : ControllerBase
 {
+    /// <summary>Registers a shop from a Platform license key and returns an OrderFlow JWT.</summary>
+    /// <response code="401">License is invalid.</response>
+    /// <response code="409">License or email already registered.</response>
     [HttpPost("signup")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> SignUp(
@@ -33,6 +39,8 @@ public class AuthController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Authenticates with email and password. Does not accept a license key.</summary>
+    /// <response code="401">Invalid email or password.</response>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(
@@ -46,6 +54,7 @@ public class AuthController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Returns the current user, shop, and plan snapshot for the JWT.</summary>
     [HttpGet("me")]
     [Authorize]
     public async Task<ActionResult<MeResponse>> Me(CancellationToken cancellationToken)

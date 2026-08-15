@@ -1,0 +1,230 @@
+<div>
+  <a
+    routerLink="/app/products"
+    class="inline-flex min-h-[44px] items-center text-sm font-semibold text-forest hover:text-forest-dark">
+    ← Back to Inventory
+  </a>
+
+  <h1 class="of-headline-lg mt-4 text-ink">
+    {{ isNew() ? 'Add product' : 'Edit product' }}
+  </h1>
+  <p class="mt-1 text-stone-600">
+    {{ isNew()
+      ? 'Create a SKU for WhatsApp selling. Stock can be adjusted later.'
+      : 'Update details, then adjust stock separately so inventory stays accurate.' }}
+  </p>
+
+  @if (error()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      {{ error() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="mt-8 text-sm text-stone-500">Loading product…</p>
+  } @else {
+    <!-- Mobile: stacked photo placeholder then fields. Desktop (lg+): upload column + form column. -->
+    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,18rem)_1fr] lg:items-start">
+      <div class="rounded-xl border border-dashed border-[#E5E0D5] bg-white px-5 py-8 text-center shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+        <p class="text-sm font-semibold text-ink">Product photo</p>
+        <p class="mt-2 text-sm text-stone-500">Photos are not in this slice yet. Save the SKU first; images come later.</p>
+      </div>
+
+      <form class="space-y-4 rounded-xl border border-[#E5E0D5] bg-white p-5 shadow-[0_2px_8px_rgba(15,107,76,0.08)] sm:p-6" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Name</span>
+          <input
+            formControlName="name"
+            [class]="fieldClass"
+            placeholder="Voltic Water 500ml"
+            [attr.maxlength]="limits.name" />
+          @if (showError('name', 'required')) {
+            <p class="mt-1.5 text-sm text-red-700">Name is required.</p>
+          } @else if (showError('name', 'maxlength')) {
+            <p class="mt-1.5 text-sm text-red-700">Name must be at most {{ limits.name }} characters.</p>
+          }
+        </label>
+
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">SKU</span>
+          <div class="mt-1.5 flex gap-2">
+            <input
+              formControlName="sku"
+              class="min-h-[44px] flex-1 rounded-lg border border-[#E5E0D5] bg-white px-3 py-2.5 font-mono text-ink placeholder:text-slate-400 focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+              placeholder="VOLT-500"
+              [attr.maxlength]="limits.sku" />
+            <button
+              type="button"
+              class="min-h-[44px] shrink-0 rounded-lg border border-forest px-4 text-sm font-semibold text-forest hover:bg-forest hover:text-white"
+              (click)="generateSkuFromName()">
+              Generate
+            </button>
+          </div>
+          @if (showError('sku', 'required')) {
+            <p class="mt-1.5 text-sm text-red-700">SKU is required.</p>
+          } @else if (showError('sku', 'maxlength')) {
+            <p class="mt-1.5 text-sm text-red-700">SKU must be at most {{ limits.sku }} characters.</p>
+          }
+        </div>
+
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Category</span>
+          <input
+            formControlName="category"
+            [class]="fieldClass"
+            placeholder="Beverages"
+            [attr.maxlength]="limits.category" />
+          @if (showError('category', 'maxlength')) {
+            <p class="mt-1.5 text-sm text-red-700">Category must be at most {{ limits.category }} characters.</p>
+          }
+        </label>
+
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Price (GHS)</span>
+          <input
+            formControlName="price"
+            type="number"
+            min="0"
+            step="0.01"
+            [attr.max]="limits.price"
+            [class]="fieldClass"
+            placeholder="3.50" />
+          @if (showError('price', 'required')) {
+            <p class="mt-1.5 text-sm text-red-700">Price is required.</p>
+          } @else if (showError('price', 'min') || showError('price', 'max')) {
+            <p class="mt-1.5 text-sm text-red-700">Price must be between 0 and {{ limits.price }}.</p>
+          }
+        </label>
+
+        @if (isNew()) {
+          <label class="block">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Opening stock</span>
+            <input
+              formControlName="stock"
+              type="number"
+              min="0"
+              step="1"
+              [attr.max]="limits.stock"
+              [class]="fieldClass"
+              placeholder="0" />
+            @if (showError('stock', 'required')) {
+              <p class="mt-1.5 text-sm text-red-700">Stock is required.</p>
+            } @else if (showError('stock', 'integer')) {
+              <p class="mt-1.5 text-sm text-red-700">Stock must be a whole number.</p>
+            } @else if (showError('stock', 'min') || showError('stock', 'max')) {
+              <p class="mt-1.5 text-sm text-red-700">Stock must be between 0 and {{ limits.stock }}.</p>
+            }
+          </label>
+        }
+
+        <label class="block">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Low-stock threshold</span>
+          <input
+            formControlName="lowStockThreshold"
+            type="number"
+            min="0"
+            step="1"
+            [attr.max]="limits.stock"
+            [class]="fieldClass"
+            placeholder="5" />
+          <p class="mt-1.5 text-sm text-stone-500">We’ll flag this product when quantity reaches this number.</p>
+          @if (showError('lowStockThreshold', 'required')) {
+            <p class="mt-1.5 text-sm text-red-700">Low-stock threshold is required.</p>
+          } @else if (showError('lowStockThreshold', 'integer')) {
+            <p class="mt-1.5 text-sm text-red-700">Low-stock threshold must be a whole number.</p>
+          } @else if (showError('lowStockThreshold', 'min') || showError('lowStockThreshold', 'max')) {
+            <p class="mt-1.5 text-sm text-red-700">Low-stock threshold must be between 0 and {{ limits.stock }}.</p>
+          }
+        </label>
+
+        @if (!isNew()) {
+          <label class="flex min-h-[44px] items-center gap-3">
+            <input
+              formControlName="isActive"
+              type="checkbox"
+              class="h-5 w-5 rounded border-[#E5E0D5] text-forest focus:ring-forest" />
+            <span class="text-sm font-semibold text-ink">Active — customers can order this SKU</span>
+          </label>
+        }
+
+        <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          <a
+            routerLink="/app/products"
+            class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-forest px-5 py-2.5 text-sm font-semibold text-forest hover:bg-paper">
+            Cancel
+          </a>
+          <button
+            type="submit"
+            class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60"
+            [disabled]="submitting()">
+            {{ submitting() ? 'Please wait…' : 'Save product' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    @if (!isNew() && product(); as current) {
+      <section class="mt-6 rounded-xl border border-[#E5E0D5] bg-white p-5 shadow-[0_2px_8px_rgba(15,107,76,0.08)] sm:p-6">
+        <h2 class="text-lg font-semibold text-ink">Stock</h2>
+        <p class="mt-1 text-sm text-stone-600">
+          On hand:
+          <span
+            class="font-semibold"
+            [class.text-amber-800]="current.isLowStock">
+            {{ current.stock }}
+          </span>
+          @if (current.isLowStock) {
+            <span class="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">Low stock</span>
+          }
+        </p>
+        <p class="mt-1 text-sm text-stone-500">Price {{ current.price | ghsCurrency }} · version {{ current.version }}</p>
+
+        @if (stockError()) {
+          <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            {{ stockError() }}
+          </div>
+        }
+
+        <form class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,12rem)_1fr_auto] sm:items-end" [formGroup]="stockForm" (ngSubmit)="adjustStock()" novalidate>
+          <label class="block">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Quantity change</span>
+            <input
+              formControlName="quantityDelta"
+              type="number"
+              step="1"
+              [attr.min]="-limits.stock"
+              [attr.max]="limits.stock"
+              [class]="fieldClass"
+              placeholder="-10 or 24" />
+            @if (showStockError('required')) {
+              <p class="mt-1.5 text-sm text-red-700">Enter a quantity change.</p>
+            } @else if (showStockError('nonZero')) {
+              <p class="mt-1.5 text-sm text-red-700">Quantity change cannot be zero.</p>
+            } @else if (showStockError('integer')) {
+              <p class="mt-1.5 text-sm text-red-700">Quantity change must be a whole number.</p>
+            } @else if (showStockError('min') || showStockError('max')) {
+              <p class="mt-1.5 text-sm text-red-700">Quantity change must be between -{{ limits.stock }} and {{ limits.stock }}.</p>
+            }
+          </label>
+          <label class="block">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</span>
+            <input
+              formControlName="notes"
+              [class]="fieldClass"
+              placeholder="Sold a crate"
+              [attr.maxlength]="limits.notes" />
+            @if (stockForm.controls.notes.touched && stockForm.controls.notes.hasError('maxlength')) {
+              <p class="mt-1.5 text-sm text-red-700">Notes must be at most {{ limits.notes }} characters.</p>
+            }
+          </label>
+          <button
+            type="submit"
+            class="min-h-[44px] rounded-lg bg-forest px-5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60"
+            [disabled]="adjusting()">
+            {{ adjusting() ? 'Please wait…' : 'Update stock' }}
+          </button>
+        </form>
+      </section>
+    }
+  }
+</div>

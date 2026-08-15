@@ -6,6 +6,10 @@ using OrderFlow.Application.Common.Interfaces;
 
 namespace OrderFlow.Infrastructure.Platform;
 
+/// <summary>
+/// Calls Platform <c>POST /api/licenses/validate</c> with <c>X-Integration-Key</c>. Does not log the license key.
+/// Network/parse failures return <c>IsValid = false</c> rather than throwing.
+/// </summary>
 public sealed class PlatformLicenseClient(
     HttpClient http,
     IOptions<PlatformOptions> options,
@@ -22,6 +26,7 @@ public sealed class PlatformLicenseClient(
     {
         var settings = options.Value;
         using var request = new HttpRequestMessage(HttpMethod.Post, "api/licenses/validate");
+        // Integration key authenticates OrderFlow to Platform; never log this header or the license body.
         request.Headers.TryAddWithoutValidation("X-Integration-Key", settings.IntegrationKey);
         request.Content = JsonContent.Create(new
         {

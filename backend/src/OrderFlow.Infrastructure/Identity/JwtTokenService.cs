@@ -10,6 +10,7 @@ using OrderFlow.Shared.Constants;
 
 namespace OrderFlow.Infrastructure.Identity;
 
+/// <summary>Issues OrderFlow JWTs with <c>sub</c>, <c>shopId</c>, <c>role</c>, and <c>planName</c>. Not a Platform token.</summary>
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     public JwtTokenResult Create(User user, Shop shop, PlanQuota plan)

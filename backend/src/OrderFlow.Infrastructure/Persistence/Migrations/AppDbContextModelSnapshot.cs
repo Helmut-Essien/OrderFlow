@@ -22,6 +22,79 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LowStockThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("ShopId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("ShopId", "Category");
+
+                    b.HasIndex("ShopId", "Sku")
+                        .IsUnique();
+
+                    b.ToTable("Products", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Products_LowStockThresholdRange", "\"LowStockThreshold\" >= 0 AND \"LowStockThreshold\" <= 99999999");
+
+                            t.HasCheckConstraint("CK_Products_NameNotEmpty", "char_length(btrim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_Products_PriceNonNegative", "\"Price\" >= 0 AND \"Price\" <= 999999999.99");
+
+                            t.HasCheckConstraint("CK_Products_SkuNotEmpty", "char_length(btrim(\"Sku\")) > 0");
+
+                            t.HasCheckConstraint("CK_Products_StockRange", "\"Stock\" >= 0 AND \"Stock\" <= 99999999");
+
+                            t.HasCheckConstraint("CK_Products_VersionPositive", "\"Version\" >= 1");
+                        });
+                });
+
             modelBuilder.Entity("OrderFlow.Domain.Entities.Shop", b =>
                 {
                     b.Property<string>("Id")
@@ -90,6 +163,60 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("OrderFlow.Domain.Entities.StockMovement", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("ProductId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<int>("QuantityDelta")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ResultingStock")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ShopId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("ShopId", "CreatedAt");
+
+                    b.ToTable("StockMovements", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StockMovements_ResultingStockRange", "\"ResultingStock\" >= 0 AND \"ResultingStock\" <= 99999999");
+
+                            t.HasCheckConstraint("CK_StockMovements_Type", "\"Type\" IN ('Adjustment', 'Reserve', 'Deduct', 'Release')");
+                        });
+                });
+
             modelBuilder.Entity("OrderFlow.Domain.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -143,6 +270,28 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("OrderFlow.Domain.Entities.Shop", "Shop")
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("OrderFlow.Domain.Entities.StockMovement", b =>
+                {
+                    b.HasOne("OrderFlow.Domain.Entities.Product", "Product")
+                        .WithMany("StockMovements")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("OrderFlow.Domain.Entities.User", b =>
                 {
                     b.HasOne("OrderFlow.Domain.Entities.Shop", "Shop")
@@ -152,6 +301,11 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>
+                {
+                    b.Navigation("StockMovements");
                 });
 
             modelBuilder.Entity("OrderFlow.Domain.Entities.Shop", b =>

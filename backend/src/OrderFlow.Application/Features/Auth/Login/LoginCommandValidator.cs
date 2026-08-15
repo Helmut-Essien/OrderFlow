@@ -2,6 +2,9 @@ using FluentValidation;
 
 namespace OrderFlow.Application.Features.Auth.Login;
 
+/// <summary>
+/// Password max length is required on login too (DoS / payload bound), not only signup. Min length is not enforced at login.
+/// </summary>
 public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()

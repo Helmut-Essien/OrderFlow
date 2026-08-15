@@ -5,7 +5,8 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Api.Tests;
 
-public class AuthEndpointsTests : IClassFixture<OrderFlowApiFactory>
+[Collection("OrderFlowApi")]
+public class AuthEndpointsTests
 {
     private readonly OrderFlowApiFactory _factory;
 
@@ -18,10 +19,11 @@ public class AuthEndpointsTests : IClassFixture<OrderFlowApiFactory>
     public async Task SignUp_Then_Login_Then_Me_ReturnsAuthenticatedShop()
     {
         var client = _factory.CreateClient();
+        var email = $"owner-{Guid.NewGuid():N}@shop.example";
         var signUp = await client.PostAsJsonAsync("/api/auth/signup", new SignUpRequest
         {
-            LicenseKey = "ORDERFLOW-DEVK-TEST",
-            Email = "owner@shop.example",
+            LicenseKey = $"ORDERFLOW-DEVK-{Guid.NewGuid():N}",
+            Email = email,
             Password = "ChangeMe123",
             ShopName = "Tema Provisions",
             DisplayName = "Ama"
@@ -36,7 +38,7 @@ public class AuthEndpointsTests : IClassFixture<OrderFlowApiFactory>
         var loginClient = _factory.CreateClient();
         var login = await loginClient.PostAsJsonAsync("/api/auth/login", new LoginRequest
         {
-            Email = "owner@shop.example",
+            Email = email,
             Password = "ChangeMe123"
         });
         login.EnsureSuccessStatusCode();
@@ -48,7 +50,7 @@ public class AuthEndpointsTests : IClassFixture<OrderFlowApiFactory>
         me.EnsureSuccessStatusCode();
         var profile = await me.Content.ReadFromJsonAsync<MeResponse>();
         Assert.Equal("Tema Provisions", profile!.ShopName);
-        Assert.Equal("owner@shop.example", profile.Email);
+        Assert.Equal(email, profile.Email);
     }
 
     [Fact]

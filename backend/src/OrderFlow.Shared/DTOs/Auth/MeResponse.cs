@@ -1,5 +1,6 @@
 namespace OrderFlow.Shared.DTOs.Auth;
 
+/// <summary>Current session without a new token. Used by <c>GET /api/auth/me</c> to hydrate shop/plan Signals.</summary>
 public class MeResponse
 {
     public required string ShopId { get; set; }

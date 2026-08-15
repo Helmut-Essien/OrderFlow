@@ -8,12 +8,17 @@ import { AuthResponse, LoginRequest, MeResponse, SignUpRequest } from './auth.mo
 
 const TOKEN_KEY = 'orderflow.token';
 
+/**
+ * App-wide session: JWT in `localStorage`, `currentUser` Signal, and shop/plan sync via {@link ShopStateService}.
+ * Core must not import feature modules.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly shopState = inject(ShopStateService);
 
+  /** Latest `/me` or login/signup payload. Null after logout or a failed token refresh. */
   readonly currentUser = signal<MeResponse | AuthResponse | null>(null);
 
   constructor() {
@@ -24,6 +29,7 @@ export class AuthService {
     }
   }
 
+  /** OrderFlow JWT, or null when signed out. */
   get token(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
@@ -32,18 +38,21 @@ export class AuthService {
     return !!this.token;
   }
 
+  /** Registers a shop with a Platform license key, then stores the issued JWT. */
   signUp(request: SignUpRequest) {
     return this.http
       .post<AuthResponse>(`${environment.apiUrl}/api/auth/signup`, request)
       .pipe(tap((response) => this.storeSession(response)));
   }
 
+  /** Email/password login. License keys are not sent. */
   login(request: LoginRequest) {
     return this.http
       .post<AuthResponse>(`${environment.apiUrl}/api/auth/login`, request)
       .pipe(tap((response) => this.storeSession(response)));
   }
 
+  /** Reloads shop/plan from `GET /api/auth/me` without issuing a new token. */
   refreshMe() {
     return this.http.get<MeResponse>(`${environment.apiUrl}/api/auth/me`).pipe(
       tap((profile) => {
@@ -53,6 +62,7 @@ export class AuthService {
     );
   }
 
+  /** Clears the JWT and shop Signals, then navigates to `/login`. */
   logout(): void {
     this.clearSession();
     void this.router.navigateByUrl('/login');

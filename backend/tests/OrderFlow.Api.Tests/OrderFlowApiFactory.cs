@@ -2,63 +2,53 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OrderFlow.Application.Common.Interfaces;
 using OrderFlow.Infrastructure.Persistence;
+using Testcontainers.PostgreSql;
 
 namespace OrderFlow.Api.Tests;
 
-public class OrderFlowApiFactory : WebApplicationFactory<Program>
+public class OrderFlowApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+        .WithImage("postgres:16-alpine")
+        .WithDatabase("orderflow_test")
+        .WithUsername("orderflow")
+        .WithPassword("orderflow_dev")
+        .Build();
+
+    public async Task InitializeAsync()
+    {
+        await _postgres.StartAsync();
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await DisposeAsync();
+        await _postgres.DisposeAsync();
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] =
-                    "Host=localhost;Port=5433;Database=orderflow_db;Username=orderflow;Password=orderflow_dev",
-                ["Platform:BaseUrl"] = "http://platform.test",
-                ["Platform:IntegrationKey"] = "test-key",
-                ["Platform:ServiceCode"] = "ORDERFLOW"
-            });
-        });
+        builder.UseSetting("ConnectionStrings:DefaultConnection", _postgres.GetConnectionString());
 
         builder.ConfigureServices(services =>
         {
-            RemoveEntityFramework(services);
-
+            services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
+            services.RemoveAll<DbContextOptions<AppDbContext>>();
+            services.RemoveAll<AppDbContext>();
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase("orderflow-tests"));
+                options.UseNpgsql(_postgres.GetConnectionString()));
 
+            services.RemoveAll<IPlatformLicenseClient>();
             services.AddSingleton<IPlatformLicenseClient, StubPlatformLicenseClient>();
         });
-    }
-
-    private static void RemoveEntityFramework(IServiceCollection services)
-    {
-        var toRemove = services.Where(descriptor =>
-            IsEfType(descriptor.ServiceType) ||
-            IsEfType(descriptor.ImplementationType) ||
-            descriptor.ImplementationInstance is IDbContextOptionsConfiguration<AppDbContext>).ToList();
-
-        foreach (var descriptor in toRemove)
-            services.Remove(descriptor);
-    }
-
-    private static bool IsEfType(Type? type)
-    {
-        if (type is null)
-            return false;
-
-        if (type == typeof(AppDbContext) || type == typeof(DbContextOptions<AppDbContext>))
-            return true;
-
-        var name = type.FullName ?? type.Name;
-        return name.Contains("EntityFrameworkCore", StringComparison.Ordinal)
-            || name.Contains("Npgsql", StringComparison.Ordinal);
     }
 
     private sealed class StubPlatformLicenseClient : IPlatformLicenseClient
@@ -67,7 +57,7 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
             string licenseKey,
             CancellationToken cancellationToken = default)
         {
-            if (licenseKey == "ORDERFLOW-DEVK-TEST")
+            if (licenseKey.StartsWith("ORDERFLOW-DEVK-", StringComparison.OrdinalIgnoreCase))
             {
                 return Task.FromResult(new LicenseValidationResult(
                     true,
@@ -76,7 +66,19 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
                     null));
             }
 
+            if (licenseKey.StartsWith("ORDERFLOW-STARTER-", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(new LicenseValidationResult(
+                    true,
+                    "Starter",
+                    DateTime.UtcNow.AddYears(1),
+                    null));
+            }
+
             return Task.FromResult(new LicenseValidationResult(false, null, null, "Invalid license key."));
         }
     }
 }
+
+[CollectionDefinition("OrderFlowApi")]
+public sealed class OrderFlowApiCollection : ICollectionFixture<OrderFlowApiFactory>;

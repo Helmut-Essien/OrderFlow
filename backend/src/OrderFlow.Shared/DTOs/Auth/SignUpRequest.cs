@@ -2,8 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OrderFlow.Shared.DTOs.Auth;
 
+/// <summary>
+/// Signup body. License key is required only here; Angular <c>AUTH_FIELD_LIMITS</c> must match these lengths.
+/// </summary>
 public class SignUpRequest
 {
+    /// <summary>Platform license key. Never logged. Max 100.</summary>
     [Required]
     [StringLength(100, MinimumLength = 1)]
     public string LicenseKey { get; set; } = string.Empty;

@@ -11,6 +11,7 @@ using OrderFlow.Infrastructure.Platform;
 
 namespace OrderFlow.Infrastructure;
 
+/// <summary>Wires EF, JWT bearer, Data Protection, repositories, and the Platform HTTP client.</summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
@@ -26,6 +27,8 @@ public static class DependencyInjection
 
         services.AddScoped<IShopRepository, ShopRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IStockMovementRepository, StockMovementRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();

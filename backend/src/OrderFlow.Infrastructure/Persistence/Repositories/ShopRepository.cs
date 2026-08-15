@@ -5,6 +5,7 @@ using OrderFlow.Infrastructure.Persistence;
 
 namespace OrderFlow.Infrastructure.Persistence.Repositories;
 
+/// <summary>Shop persistence. License-hash lookup ignores tenant filters so signup can detect an already-registered key.</summary>
 public sealed class ShopRepository(AppDbContext db) : IShopRepository
 {
     public Task<Shop?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -16,6 +17,7 @@ public sealed class ShopRepository(AppDbContext db) : IShopRepository
         string licenseLookupHash,
         CancellationToken cancellationToken = default)
     {
+        // Signup is anonymous, so the shop filter would hide every row without this bypass.
         return db.Shops.IgnoreQueryFilters()
             .FirstOrDefaultAsync(s => s.LicenseLookupHash == licenseLookupHash, cancellationToken);
     }

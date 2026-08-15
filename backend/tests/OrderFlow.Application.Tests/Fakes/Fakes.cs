@@ -75,6 +75,78 @@ internal sealed class FakeJwtTokenService : IJwtTokenService
         => new("test-token", DateTime.UtcNow.AddHours(8));
 }
 
+internal sealed class FakeProductRepository : IProductRepository
+{
+    public List<Product> Items { get; } = [];
+
+    public Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        => Task.FromResult(Items.FirstOrDefault(p => p.Id == id));
+
+    public Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default)
+        => Task.FromResult(Items.FirstOrDefault(p => p.ShopId == shopId && p.Sku == sku));
+
+    public Task<ProductListResult> ListAsync(
+        string shopId,
+        string? search,
+        string? category,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        IEnumerable<Product> query = Items.Where(p => p.ShopId == shopId);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(p => p.Name.ToLowerInvariant().Contains(term) || p.Sku.ToLowerInvariant().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+            query = query.Where(p => p.Category == category.Trim());
+
+        var materialized = query.OrderBy(p => p.Name).ThenBy(p => p.Sku).ToList();
+        var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult(new ProductListResult(pageItems, materialized.Count));
+    }
+
+    public Task<int> CountByShopAsync(string shopId, CancellationToken cancellationToken = default)
+        => Task.FromResult(Items.Count(p => p.ShopId == shopId));
+
+    public Task<IReadOnlyList<Product>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<Product>>(
+            Items.Where(p => p.ShopId == shopId && p.IsActive && p.IsLowStock)
+                .OrderBy(p => p.Stock)
+                .ThenBy(p => p.Name)
+                .ToList());
+
+    public void Add(Product product) => Items.Add(product);
+
+    public Task<StockAdjustmentResult?> TryAdjustStockAsync(
+        string productId,
+        string shopId,
+        long expectedVersion,
+        int quantityDelta,
+        CancellationToken cancellationToken = default)
+    {
+        var item = Items.FirstOrDefault(p => p.Id == productId && p.ShopId == shopId);
+        if (item is null || item.Version != expectedVersion)
+            return Task.FromResult<StockAdjustmentResult?>(null);
+
+        var newStock = item.Stock + quantityDelta;
+        if (newStock < 0 || newStock > ProductConstraints.MaxStock)
+            return Task.FromResult<StockAdjustmentResult?>(null);
+
+        item.ApplyStock(newStock, item.Version + 1);
+        return Task.FromResult<StockAdjustmentResult?>(new StockAdjustmentResult(item.Stock, item.Version));
+    }
+}
+
+internal sealed class FakeStockMovementRepository : IStockMovementRepository
+{
+    public List<StockMovement> Items { get; } = [];
+
+    public void Add(StockMovement movement) => Items.Add(movement);
+}
+
 internal sealed class FakeCurrentUser : ICurrentUser
 {
     public string? UserId { get; set; }

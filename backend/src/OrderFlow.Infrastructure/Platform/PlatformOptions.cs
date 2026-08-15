@@ -1,5 +1,6 @@
 namespace OrderFlow.Infrastructure.Platform;
 
+/// <summary>Platform HTTP settings from config section <c>Platform</c> (env <c>PLATFORM__*</c>). Never log <see cref="IntegrationKey"/>.</summary>
 public sealed class PlatformOptions
 {
     public const string SectionName = "Platform";

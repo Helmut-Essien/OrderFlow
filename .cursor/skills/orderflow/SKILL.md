@@ -5,9 +5,11 @@ description: >-
   Clean Architecture API, PostgreSQL, JWT, Platform license validation, WhatsApp
   orders, inventory, Paystack. Enforces full-stack field constraints (Domain, EF
   checks, FluentValidation, Shared DTOs, Angular limits/validators) in the same
-  slice. Use for this repo, any implementation slice, auth, shops, products,
-  orders, WhatsApp, payments, plan limits, migrations, validations, or local
-  dev. Delivers one slice at a time per user confirmation.
+  slice. Generated C# and Angular code must be documented (XML/JSDoc) and
+  commented to best standards. Use for this repo, any implementation slice,
+  auth, shops, products, orders, WhatsApp, payments, plan limits, migrations,
+  validations, documentation comments, or local dev. Delivers one slice at a
+  time per user confirmation.
 ---
 
 # OrderFlow
@@ -29,26 +31,27 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 2. **Ask for confirmation** before the next slice.
 3. No placeholders (`// TODO`, `// add logic here`).
 4. External setup (Postgres, Platform) → `docker-compose` or clear notes in [README.md](../../../README.md).
-5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, and frontend conventions.
+5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, frontend conventions, and documentation comments.
 6. **Constraints are full-stack** — any new/changed field limit, requiredness, enum set, or normalization ships in the **same slice** on Domain + EF + FluentValidation + Shared DTOs **and** Angular (limits constant, validators, `maxlength`, submit normalize). Never leave backend-only or frontend-only constraints. Checklist: [reference.md](reference.md#constraints-full-stack).
+7. **Document generated code** — public C# APIs get XML (`///`) docs; exported Angular APIs get JSDoc (`/** */`). Inline comments explain **why** (invariants, tenancy, concurrency, security), never the next obvious line. Details: [reference.md](reference.md#documentation-conventions).
 
 ## Technology stack
 
 | Layer | Technology | Status |
 |-------|------------|--------|
-| Frontend | Angular 19 standalone + Tailwind 3 + Signals | Auth + empty dashboard |
-| Backend | ASP.NET Core 9 Web API, MediatR, FluentValidation | Auth slice |
+| Frontend | Angular 19 standalone + Tailwind 3 + Signals | Auth + products + dashboard |
+| Backend | ASP.NET Core 9 Web API, MediatR, FluentValidation | Auth + products + dashboard |
 | ORM | EF Core 9 + Npgsql | Active |
 | Database | PostgreSQL 16 (Docker, port 5433) | Active |
 | IDs | NUlid string PKs | Active |
 | Auth | OrderFlow-issued JWT (not Platform JWT) | Active |
 | Passwords | BCrypt.Net-Next | Active |
 | License keys | SHA-256 lookup hash + Data Protection (never log plaintext) | Active |
-| Logging | Serilog + secret redaction | Adopt with Slice 2+ |
+| Logging | Serilog + secret redaction | Active |
 | Platform | `IPlatformLicenseClient` → `X-Integration-Key` | Active |
 | WhatsApp | `IWhatsAppClient` + webhook signature verify (not implemented) | Later slice |
 | Payments | `IPaymentGateway` / Paystack (not implemented) | Later slice |
-| Tests | xUnit, NSubstitute, FluentAssertions, Testcontainers.PostgreSql | Active / evolve off InMemory |
+| Tests | xUnit, NSubstitute, FluentAssertions, Testcontainers.PostgreSql | Active |
 
 ## Solution layout
 
@@ -117,13 +120,14 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Shared DTOs: `[Required]` / `[StringLength]` / `[EmailAddress]` must match FluentValidation + EF `HasMaxLength`
 - Angular: standalone components, `inject()`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
 - Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/` (pipes, **validators**), `features/{name}/pages|data|routes` — see [reference.md](reference.md)
-- Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + children)
+- Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + dashboard), `/app/products`
 - Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
 - Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
 - Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))
-- Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters.
+- Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters. Test method names document behavior; comments only for non-obvious arrange/assert.
+- **Documentation:** XML on public C# types/members; JSDoc on exported TypeScript. Document exceptions, plan limits, Shop tenancy, and concurrency. Do not narrate obvious code or leave commented-out dead code. Full rules: [reference.md](reference.md#documentation-conventions).
 - Commits only when the user asks; never commit production secrets
 - Config: nested settings via env `__` (e.g. `PLATFORM__BASEURL`) — full table in [reference.md](reference.md)
 

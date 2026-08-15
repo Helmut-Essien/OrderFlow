@@ -3,6 +3,9 @@ using MediatR;
 
 namespace OrderFlow.Application.Common.Behaviors;
 
+/// <summary>
+/// MediatR pipeline that runs FluentValidation before the handler. Failures become HTTP 400 via exception middleware.
+/// </summary>
 public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull

@@ -7,6 +7,9 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Application.Features.Auth.Login;
 
+/// <summary>
+/// Authenticates by email/password and issues an OrderFlow JWT. Failed lookups use the same message as bad passwords.
+/// </summary>
 public sealed class LoginCommandHandler(
     IShopRepository shops,
     IUserRepository users,

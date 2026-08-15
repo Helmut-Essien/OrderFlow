@@ -8,6 +8,11 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Application.Features.Auth.SignUp;
 
+/// <summary>
+/// Validates a Platform license, creates the shop + owner, and issues an OrderFlow JWT.
+/// </summary>
+/// <exception cref="UnauthorizedAppException">License is invalid.</exception>
+/// <exception cref="ConflictAppException">License hash or email already registered.</exception>
 public sealed class SignUpCommandHandler(
     IPlatformLicenseClient platform,
     IShopRepository shops,
@@ -23,6 +28,7 @@ public sealed class SignUpCommandHandler(
         if (!validation.IsValid)
             throw new UnauthorizedAppException(validation.Message ?? "License is not valid.");
 
+        // Lookup by hash so plaintext license keys are never stored or compared in SQL.
         var lookupHash = LicenseLookupHasher.Compute(request.LicenseKey.Trim());
         if (await shops.GetByLicenseLookupHashAsync(lookupHash, cancellationToken) is not null)
             throw new ConflictAppException("This shop is already registered. Please sign in.");

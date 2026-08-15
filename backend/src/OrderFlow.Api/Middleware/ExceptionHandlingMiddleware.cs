@@ -5,6 +5,9 @@ using OrderFlow.Application.Common.Exceptions;
 
 namespace OrderFlow.Api.Middleware;
 
+/// <summary>
+/// Maps <see cref="AppException"/> and FluentValidation failures to camelCase JSON. Unhandled exceptions become 500 without leaking internals.
+/// </summary>
 public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
@@ -21,17 +24,19 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
     private async Task WriteAsync(HttpContext context, Exception exception)
     {
-        var (status, message, errors) = exception switch
+        var (status, message, code, errors) = exception switch
         {
-            UnauthorizedAppException ex => (HttpStatusCode.Unauthorized, ex.Message, (object?)null),
-            ConflictAppException ex => (HttpStatusCode.Conflict, ex.Message, null),
-            NotFoundAppException ex => (HttpStatusCode.NotFound, ex.Message, null),
-            ForbiddenAppException ex => (HttpStatusCode.Forbidden, ex.Message, null),
+            UnauthorizedAppException ex => (HttpStatusCode.Unauthorized, ex.Message, (string?)null, (object?)null),
+            ConcurrencyAppException ex => (HttpStatusCode.Conflict, ex.Message, "concurrency", null),
+            ConflictAppException ex => (HttpStatusCode.Conflict, ex.Message, null, null),
+            NotFoundAppException ex => (HttpStatusCode.NotFound, ex.Message, null, null),
+            ForbiddenAppException ex => (HttpStatusCode.Forbidden, ex.Message, null, null),
             ValidationException ex => (
                 HttpStatusCode.BadRequest,
                 "Validation failed.",
+                null,
                 ex.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", (object?)null)
+            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", null, (object?)null)
         };
 
         if (status == HttpStatusCode.InternalServerError)
@@ -45,6 +50,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         var payload = new
         {
             message,
+            code,
             errors
         };
 

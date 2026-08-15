@@ -11,6 +11,29 @@ export const requiredTrimmed: ValidatorFn = (
   return null;
 };
 
+/** Accepts empty (optional) values; otherwise requires an integer. Used for stock fields. */
+export const integerNumber: ValidatorFn = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const value = control.value;
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  return Number.isInteger(Number(value)) ? null : { integer: true };
+};
+
+/** Rejects a numeric zero. Used for stock adjustment delta. */
+export const nonZeroNumber: ValidatorFn = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const value = control.value;
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  return Number(value) === 0 ? { nonZero: true } : null;
+};
+
+/** Group validator: `password` and `confirmPassword` must match when confirm is filled. */
 export const passwordsMatchValidator: ValidatorFn = (
   control: AbstractControl
 ): ValidationErrors | null => {

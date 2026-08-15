@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+/** Marketing landing at `/`. */
 export const LANDING_ROUTES: Routes = [
   {
     path: '',

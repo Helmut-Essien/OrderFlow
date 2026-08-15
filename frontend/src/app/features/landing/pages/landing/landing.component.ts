@@ -21,6 +21,7 @@ interface PlanCard {
   highlighted: boolean;
 }
 
+/** Marketing home at `/`. Plan copy matches `PlanQuota`. Motion respects `prefers-reduced-motion`. */
 @Component({
   selector: 'app-landing',
   imports: [RouterLink, NgClass],
@@ -37,6 +38,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   readonly menuOpen = signal(false);
   readonly year = new Date().getFullYear();
+  /** When true, illustration loops stay static and reveal classes apply immediately. */
   readonly reducedMotion = signal(false);
   readonly tiltX = signal(0);
   readonly tiltY = signal(0);
@@ -116,6 +118,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     this.observer?.disconnect();
   }
 
+  /** Pointer tilt for the hero scene. Disabled for touch and reduced motion. */
   onStageMove(event: PointerEvent): void {
     if (this.reducedMotion() || event.pointerType === 'touch') {
       return;

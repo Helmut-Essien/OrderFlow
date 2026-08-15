@@ -14,6 +14,7 @@ interface ApiValidationError {
   errorMessage?: string;
 }
 
+/** Auth Gateway: login and signup tabs. License key is collected on signup only. */
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule],
@@ -70,6 +71,7 @@ export class LoginComponent {
     this.mode.set(initialMode);
   }
 
+  /** Switches tabs and re-applies validators (license/shop required only on signup). */
   setMode(mode: 'login' | 'signup'): void {
     this.mode.set(mode);
     this.error.set(null);
@@ -97,6 +99,7 @@ export class LoginComponent {
     );
   }
 
+  /** Login or signup. Email is lowercased on submit to match server storage. */
   submit(): void {
     this.error.set(null);
     this.form.markAllAsTouched();

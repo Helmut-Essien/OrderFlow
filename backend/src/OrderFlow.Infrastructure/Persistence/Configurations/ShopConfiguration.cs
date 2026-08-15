@@ -4,6 +4,9 @@ using OrderFlow.Domain.Entities;
 
 namespace OrderFlow.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Shop table. License lookup hash is unique and exactly 64 chars; plaintext keys are never stored.
+/// </summary>
 public class ShopConfiguration : IEntityTypeConfiguration<Shop>
 {
     public void Configure(EntityTypeBuilder<Shop> builder)

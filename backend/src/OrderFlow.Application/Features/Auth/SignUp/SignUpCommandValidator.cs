@@ -2,6 +2,7 @@ using FluentValidation;
 
 namespace OrderFlow.Application.Features.Auth.SignUp;
 
+/// <summary>Signup field limits matching Shared DTOs. Password min 8 / max 128.</summary>
 public sealed class SignUpCommandValidator : AbstractValidator<SignUpCommand>
 {
     public SignUpCommandValidator()

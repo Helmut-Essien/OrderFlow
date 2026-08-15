@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+/** Formats a number as `GHS 1,250.00` using `en-GH`. Null/NaN become `GHS 0.00`. */
 @Pipe({
   name: 'ghsCurrency',
   standalone: true

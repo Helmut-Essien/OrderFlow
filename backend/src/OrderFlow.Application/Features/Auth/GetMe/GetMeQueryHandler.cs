@@ -7,6 +7,7 @@ using OrderFlow.Shared.DTOs.Auth;
 
 namespace OrderFlow.Application.Features.Auth.GetMe;
 
+/// <summary>Loads user + shop for <c>GET /api/auth/me</c>. Surfaces <c>PlanUnrecognized</c> from the shop snapshot.</summary>
 public sealed class GetMeQueryHandler(
     ICurrentUser currentUser,
     IShopRepository shops,

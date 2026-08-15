@@ -5,6 +5,7 @@ using OrderFlow.Shared.Constants;
 
 namespace OrderFlow.Infrastructure.Identity;
 
+/// <summary>Reads the authenticated principal from HTTP context. <see cref="ShopId"/> drives EF tenant filters.</summary>
 public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
     public string? UserId =>

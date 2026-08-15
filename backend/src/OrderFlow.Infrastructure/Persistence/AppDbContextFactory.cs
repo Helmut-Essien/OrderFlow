@@ -4,6 +4,7 @@ using OrderFlow.Infrastructure.Persistence;
 
 namespace OrderFlow.Infrastructure.Persistence;
 
+/// <summary>Design-time factory for <c>dotnet ef</c>. Uses <see cref="NullCurrentUser"/> so query filters do not hide tables.</summary>
 public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args)

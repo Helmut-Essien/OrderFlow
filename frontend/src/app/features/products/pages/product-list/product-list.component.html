@@ -1,0 +1,195 @@
+<div>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="of-headline-lg text-ink">Inventory</h1>
+      <p class="mt-1 text-stone-600">
+        Products customers can order on WhatsApp.
+        @if (shop.plan()?.maxProducts != null) {
+          <span class="text-stone-500">
+            {{ totalCount() }} / {{ shop.plan()?.maxProducts }} on {{ shop.plan()?.name }}.
+          </span>
+        }
+      </p>
+    </div>
+    @if (atPlanLimit()) {
+      <p class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:max-w-sm">
+        Your {{ shop.plan()?.name }} plan is at its product limit.
+      </p>
+    } @else {
+      <a
+        routerLink="/app/products/new"
+        class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark">
+        Add Product
+      </a>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      {{ error() }}
+    </div>
+  }
+
+  <div class="mt-6 flex flex-col gap-3">
+    <label class="block max-w-xl">
+      <span class="sr-only">Search products</span>
+      <input
+        type="search"
+        [class]="fieldClass"
+        placeholder="Search name or SKU"
+        [attr.maxlength]="limits.search"
+        (input)="onSearch($event)" />
+    </label>
+
+    @if (categories().length > 0) {
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+        <button
+          type="button"
+          class="min-h-[44px] rounded-full px-4 text-sm font-semibold"
+          [class.bg-forest]="category() === null"
+          [class.text-white]="category() === null"
+          [class.bg-white]="category() !== null"
+          [class.text-stone-600]="category() !== null"
+          [class.border]="category() !== null"
+          [class.border-[#E5E0D5]]="category() !== null"
+          (click)="selectCategory(null)">
+          All
+        </button>
+        @for (chip of categories(); track chip) {
+          <button
+            type="button"
+            class="min-h-[44px] rounded-full px-4 text-sm font-semibold"
+            [class.bg-forest]="category() === chip"
+            [class.text-white]="category() === chip"
+            [class.bg-white]="category() !== chip"
+            [class.text-stone-600]="category() !== chip"
+            [class.border]="category() !== chip"
+            [class.border-[#E5E0D5]]="category() !== chip"
+            (click)="selectCategory(chip)">
+            {{ chip }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading() && items().length === 0) {
+    <p class="mt-8 text-sm text-stone-500">Loading products…</p>
+  } @else if (items().length === 0) {
+    <div class="mt-8 rounded-xl border border-[#E5E0D5] bg-white px-6 py-10 text-center shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-ink font-semibold">No products yet</p>
+      <p class="mt-1 text-sm text-stone-500">Add the first SKU so WhatsApp orders have something to sell.</p>
+      @if (!atPlanLimit()) {
+        <a
+          routerLink="/app/products/new"
+          class="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark">
+          Add Product
+        </a>
+      }
+    </div>
+  } @else {
+    <!-- Mobile cards -->
+    <ul class="mt-6 space-y-3 md:hidden">
+      @for (product of items(); track product.id) {
+        <li>
+          <a
+            [routerLink]="['/app/products', product.id]"
+            class="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border border-[#E5E0D5] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+            <div class="min-w-0">
+              <p class="font-semibold text-ink truncate">{{ product.name }}</p>
+              <p class="mt-0.5 font-mono text-xs text-stone-500">{{ product.sku }}</p>
+              <p class="mt-1 text-sm text-stone-600">{{ product.price | ghsCurrency }}</p>
+            </div>
+            <div class="flex shrink-0 flex-col items-end gap-1">
+              <p
+                class="text-sm font-semibold"
+                [class.text-amber-800]="product.isLowStock"
+                [class.text-ink]="!product.isLowStock">
+                Qty {{ product.stock }}
+              </p>
+              @if (product.isLowStock) {
+                <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">Low stock</span>
+              } @else if (!product.isActive) {
+                <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600">Inactive</span>
+              } @else {
+                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+              }
+              <span class="text-stone-400" aria-hidden="true">›</span>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <!-- Desktop table -->
+    <div class="mt-6 hidden overflow-hidden rounded-xl border border-[#E5E0D5] bg-white shadow-[0_2px_8px_rgba(15,107,76,0.08)] md:block">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-[#E5E0D5] bg-paper/60 text-xs font-semibold uppercase tracking-wider text-stone-500">
+          <tr>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3">SKU</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Price</th>
+            <th class="px-4 py-3">Qty</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of items(); track product.id) {
+            <tr class="border-b border-[#E5E0D5] last:border-0">
+              <td class="px-4 py-3 font-semibold text-ink">{{ product.name }}</td>
+              <td class="px-4 py-3 font-mono text-stone-600">{{ product.sku }}</td>
+              <td class="px-4 py-3 text-stone-600">{{ product.category || '—' }}</td>
+              <td class="px-4 py-3">{{ product.price | ghsCurrency }}</td>
+              <td
+                class="px-4 py-3 font-semibold"
+                [class.text-amber-800]="product.isLowStock">
+                {{ product.stock }}
+                @if (product.isLowStock) {
+                  <span class="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">Low</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (product.isActive) {
+                  <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+                } @else {
+                  <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600">Inactive</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-right">
+                <a
+                  [routerLink]="['/app/products', product.id]"
+                  class="inline-flex min-h-[44px] items-center font-semibold text-forest hover:text-forest-dark">
+                  Edit
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-stone-500">
+        Showing {{ rangeStart() }} to {{ rangeEnd() }} of {{ totalCount() }}
+      </p>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="min-h-[44px] rounded-lg border border-[#E5E0D5] bg-white px-4 text-sm font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+          [disabled]="page() <= 1 || loading()"
+          (click)="previousPage()">
+          Previous
+        </button>
+        <button
+          type="button"
+          class="min-h-[44px] rounded-lg border border-[#E5E0D5] bg-white px-4 text-sm font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="nextPage()">
+          Next
+        </button>
+      </div>
+    </div>
+  }
+</div>

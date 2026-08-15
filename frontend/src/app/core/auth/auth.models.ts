@@ -1,4 +1,7 @@
-/** Mirrors backend Shared DTO / FluentValidation field limits. */
+/**
+ * Client field limits; must stay in sync with Shared DTO `[StringLength]` and FluentValidation.
+ * Password min 8 applies to signup only; max 128 applies to login too.
+ */
 export const AUTH_FIELD_LIMITS = {
   licenseKey: 100,
   email: 320,
@@ -11,9 +14,11 @@ export const AUTH_FIELD_LIMITS = {
 
 export type UserRole = 'Owner' | 'Assistant';
 
+/** Plan snapshot from Platform `planName`. Null max values mean unlimited. */
 export interface PlanInfo {
   name: string;
   originalName?: string | null;
+  /** True when Platform returned an unknown plan; show an amber warning. */
   isUnrecognized: boolean;
   maxProducts?: number | null;
   maxOrdersPerMonth?: number | null;
@@ -22,6 +27,7 @@ export interface PlanInfo {
   expiresAt?: string | null;
 }
 
+/** Mirrors `AuthResponse` — includes the OrderFlow JWT (not a Platform token). */
 export interface AuthResponse {
   token: string;
   expiresAt: string;
@@ -34,6 +40,7 @@ export interface AuthResponse {
   plan: PlanInfo;
 }
 
+/** Mirrors `MeResponse` — session without a new token. */
 export interface MeResponse {
   shopId: string;
   shopName: string;

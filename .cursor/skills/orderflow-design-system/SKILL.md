@@ -12,7 +12,7 @@ description: >-
 
 **This skill is the visual source of truth** for Angular/Tailwind work. Stitch mocks are optional reference only when available.
 
-Implement in `frontend/` with **Tailwind 3** + **Source Sans 3** (Fraunces on landing headlines only). Full token tables: [tokens.md](tokens.md). Atmosphere CSS recipes: [atmosphere.md](atmosphere.md). Screen/UX patterns: [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
+Implement in `frontend/` with **Tailwind 3** + **Source Sans 3** (Fraunces on landing headlines only). Full token tables: [tokens.md](tokens.md). Atmosphere CSS recipes: [atmosphere.md](atmosphere.md). Screen/UX patterns: [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md). Document custom CSS/utilities with a short comment stating **why** the class exists (token mapping, atmosphere intensity, reduced-motion). Do not comment every Tailwind utility in templates.
 
 ## Design intent
 
@@ -172,3 +172,4 @@ Fully rounded pills; soft tint bg + strong text.
 - [ ] 44px touch targets; mobile layout first
 - [ ] GHS formatting; status as pills
 - [ ] `prefers-reduced-motion` respected for illustration loops
+- [ ] Custom CSS/utilities commented with why (not a restatement of the selector)

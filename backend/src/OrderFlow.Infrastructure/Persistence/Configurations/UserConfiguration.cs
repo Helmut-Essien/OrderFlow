@@ -4,6 +4,7 @@ using OrderFlow.Domain.Entities;
 
 namespace OrderFlow.Infrastructure.Persistence.Configurations;
 
+/// <summary>User table. Email is globally unique; role is a CHECK-constrained string.</summary>
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)

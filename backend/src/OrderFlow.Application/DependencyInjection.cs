@@ -5,6 +5,7 @@ using OrderFlow.Application.Common.Behaviors;
 
 namespace OrderFlow.Application;
 
+/// <summary>Registers MediatR handlers, FluentValidation validators, and the validation pipeline behavior.</summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)

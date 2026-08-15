@@ -1,7 +1,9 @@
 namespace OrderFlow.Shared.DTOs.Auth;
 
+/// <summary>Signup/login response with an OrderFlow JWT (not a Platform token) and shop/plan snapshot.</summary>
 public class AuthResponse
 {
+    /// <summary>Bearer token for subsequent API calls.</summary>
     public required string Token { get; set; }
 
     public required DateTime ExpiresAt { get; set; }
