@@ -1,6 +1,6 @@
 # OrderFlow slices
 
-Deliver **one slice at a time**. Confirm with the user before starting the next.
+Deliver **one slice at a time**. Confirm with the user before starting the next. Every slice must follow [production.md](production.md) and [performance.md](performance.md) — Production fail-fast, same-origin SPA, paged indexed queries, Angular `OnPush`.
 
 | Slice | Focus | Status |
 |-------|-------|--------|

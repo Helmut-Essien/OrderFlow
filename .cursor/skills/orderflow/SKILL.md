@@ -3,18 +3,19 @@ name: orderflow
 description: >-
   Guides the OrderFlow B2B SaaS: Angular 19 + Tailwind frontend, ASP.NET Core 9
   Clean Architecture API, PostgreSQL, JWT, Platform license validation, WhatsApp
-  orders, inventory, Paystack. Enforces full-stack field constraints (Domain, EF
+  orders, inventory, Paystack. Generates production-ready, performance-optimized
+  C# and Angular (fail-fast Production config, same-origin SPA, indexed paged
+  queries, OnPush Signals). Enforces full-stack field constraints (Domain, EF
   checks, FluentValidation, Shared DTOs, Angular limits/validators) in the same
-  slice. Generated C# and Angular code must be documented (XML/JSDoc) and
-  commented to best standards. Use for this repo, any implementation slice,
-  auth, shops, products, orders, WhatsApp, payments, plan limits, migrations,
-  validations, documentation comments, or local dev. Delivers one slice at a
-  time per user confirmation.
+  slice. Generated code must be documented (XML/JSDoc). Use for this repo, any
+  implementation slice, auth, shops, products, orders, WhatsApp, payments, plan
+  limits, migrations, validations, production hardening, performance, or local
+  dev. Delivers one slice at a time per user confirmation.
 ---
 
 # OrderFlow
 
-Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana. License entitlement lives in the **Platform** hub (`../platform`). OrderFlow calls only `POST /api/licenses/validate`. Companion files: [phases.md](phases.md), [reference.md](reference.md), [documentation.md](documentation.md).
+Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana. License entitlement lives in the **Platform** hub (`../platform`). OrderFlow calls only `POST /api/licenses/validate`. Companion files: [phases.md](phases.md), [reference.md](reference.md), [documentation.md](documentation.md), [production.md](production.md), [performance.md](performance.md).
 
 ## Vision
 
@@ -34,6 +35,8 @@ Standalone WhatsApp-native order and inventory SaaS for small retailers in Ghana
 5. See [phases.md](phases.md) for slice scope. See [reference.md](reference.md) for APIs, entities, and frontend conventions. See [documentation.md](documentation.md) for XML/JSDoc rules.
 6. **Constraints are full-stack** — any new/changed field limit, requiredness, enum set, or normalization ships in the **same slice** on Domain + EF + FluentValidation + Shared DTOs **and** Angular (limits constant, validators, `maxlength`, submit normalize). Never leave backend-only or frontend-only constraints. Checklist: [reference.md](reference.md).
 7. **Document generated code** — public C# APIs get XML (`///`) docs; exported Angular APIs get JSDoc (`/** */`). Inline comments explain **why** (invariants, tenancy, concurrency, security), never the next obvious line. Details: [documentation.md](documentation.md).
+8. **Production-ready by default** — generate for Production + `ng build`, not only `dotnet run` / `ng serve`. Fail-fast secrets, same-origin SPA, health/security headers, no localhost in the production bundle. Apply [production.md](production.md) in the same slice.
+9. **Performance by default** — paged indexed SQL, `AsNoTracking` reads, atomic stock updates, lazy feature routes, `OnPush` + Signals, `@for` track by id, debounced search. Apply [performance.md](performance.md) in the same slice. Do not add Redis.
 
 ## Technology stack
 
@@ -118,18 +121,19 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Private entity setters; factory methods (`Shop.Create`, `User.CreateOwner`) with **domain guards** (null/whitespace, max lengths, fixed-size hashes, normalize email lowercase / trim)
 - Enums stored as PostgreSQL strings; EF **CHECK** constraints for allowed enum string values and non-empty required strings
 - Shared DTOs: `[Required]` / `[StringLength]` / `[EmailAddress]` must match FluentValidation + EF `HasMaxLength`
-- Angular: standalone components, `inject()`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
+- Angular: standalone components, `inject()`, `ChangeDetectionStrategy.OnPush`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
 - Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/` (pipes, **validators**), `features/{name}/pages|data|routes` — see [reference.md](reference.md)
 - Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + dashboard), `/app/products`
-- Angular state: **Signals**; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup.
+- Angular state: **Signals** + `OnPush`; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup. `@for` must `track` by entity id.
 - Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. App sidebar only at `lg+`; bottom nav + iOS safe areas below `lg`. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX / mobile rules → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).
-- Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md))
+- Inventory writes: optimistic concurrency on `Product` (see [reference.md](reference.md)). List/get queries: `AsNoTracking`, paged, indexed `ShopId` filters (see [performance.md](performance.md)).
 - Logging: Serilog with redaction of secrets (see [reference.md](reference.md))
 - Tests: unit (xUnit + NSubstitute + FluentAssertions) for handlers/validators; integration with **Testcontainers.PostgreSql** (not EF InMemory). Mock external adapters. Test method names document behavior; comments only for non-obvious arrange/assert.
 - **Documentation:** XML on public C# types/members; JSDoc on exported TypeScript. Document exceptions, plan limits, Shop tenancy, and concurrency. Do not narrate obvious code or leave commented-out dead code. Full rules: [documentation.md](documentation.md).
 - Commits only when the user asks; never commit production secrets
 - Config: nested settings via env `__` (e.g. `PLATFORM__BASEURL`) — full table in [reference.md](reference.md)
+- Production + performance checklists: [production.md](production.md), [performance.md](performance.md). `StartupConfiguration` must keep rejecting Development secrets in Production.
 
 ## Local development
 
@@ -148,5 +152,7 @@ Dev sign up: license `ORDERFLOW-DEVK-TEST`, any email, password ≥ 8 chars.
 
 ```bash
 dotnet test OrderFlow.sln
+dotnet publish backend/src/OrderFlow.Api/OrderFlow.Api.csproj -c Release
+cd frontend && npm run build
 dotnet ef migrations add Name --project backend/src/OrderFlow.Infrastructure --startup-project backend/src/OrderFlow.Api --output-dir Persistence/Migrations
 ```

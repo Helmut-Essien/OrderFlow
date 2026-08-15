@@ -24,6 +24,15 @@ public class LoginCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ThrowsUnauthorized_WhenEmailIsUnknown()
+    {
+        var (handler, _, _) = CreateHandler();
+
+        await Assert.ThrowsAsync<UnauthorizedAppException>(() =>
+            handler.Handle(new LoginCommand("nobody@shop.example", "ChangeMe123"), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Handle_ThrowsUnauthorized_WhenPasswordIsWrong()
     {
         var (handler, _, _) = CreateHandler();

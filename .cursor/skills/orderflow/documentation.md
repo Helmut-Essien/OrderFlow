@@ -111,5 +111,7 @@ Use a short `//` (C# / TypeScript) or `<!-- -->` (HTML) when:
 - Stock updates must be atomic with `Version` (do not “fix” to read-modify-write)
 - A value is normalized (SKU uppercase, email lowercase) and callers might skip it
 - Security: never log license keys / integration keys; redact in Serilog
+- Performance: `AsNoTracking` on reads; why search uses `ILike` instead of `ToLower()`
+- Production: why a setting is rejected at startup (Dev key, localhost Platform URL)
 
 Place the comment **above** the non-obvious block, not at the end of a long line.

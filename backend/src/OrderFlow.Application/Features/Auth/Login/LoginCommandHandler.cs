@@ -16,11 +16,18 @@ public sealed class LoginCommandHandler(
     IPasswordHasher passwordHasher,
     IJwtTokenService jwt) : IRequestHandler<LoginCommand, AuthResponse>
 {
+    /// <summary>
+    /// BCrypt hash of a throwaway secret (work factor 11). Used when the email is unknown so verify cost matches a real user.
+    /// </summary>
+    private const string DummyPasswordHash = "$2a$11$bePeA9FXpCtiTvP7RSzQCOyAiGn7sNxR97CyB.FjcI.wJM7RYG8Ty";
+
     public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await users.GetByEmailAsync(email, cancellationToken);
-        if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
+        // Always Verify so unknown emails take the same time as a wrong password (no user-enumeration via timing).
+        var passwordMatches = passwordHasher.Verify(request.Password, user?.PasswordHash ?? DummyPasswordHash);
+        if (user is null || !passwordMatches)
             throw new UnauthorizedAppException("Invalid email or password.");
 
         var shop = await shops.GetByIdAsync(user.ShopId, cancellationToken)

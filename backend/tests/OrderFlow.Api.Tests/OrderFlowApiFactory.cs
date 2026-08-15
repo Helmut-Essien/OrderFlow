@@ -37,6 +37,9 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>, IAsyncLifetim
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:DefaultConnection", _postgres.GetConnectionString());
+        builder.UseSetting("Jwt:Key", "OrderFlow_Test_Jwt_Signing_Key_Not_For_Production_Use_32");
+        builder.UseSetting("Platform:BaseUrl", "http://127.0.0.1:9");
+        builder.UseSetting("Platform:IntegrationKey", "test-integration-key");
 
         builder.ConfigureServices(services =>
         {

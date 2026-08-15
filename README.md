@@ -68,7 +68,30 @@ Later visits use **Sign in** with the same email and password. The license key i
 | Platform URL | `http://localhost:5176` |
 | Platform integration key | `ORDERFLOW-INTEGRATION-DEV-KEY-1b7e3c4a5d8f` (Development only) |
 
-Production must set `Platform:IntegrationKey` and `Jwt:Key` via environment variables or user secrets. Never commit production keys.
+Development secrets live in `appsettings.Development.json` only. `appsettings.json` ships empty JWT, Platform, and connection-string values so a Production process cannot boot on committed defaults.
+
+## Production
+
+The API refuses to start in Production unless environment variables replace every Development secret. JWT signing key must be at least 64 characters and must not be the Development key.
+
+```bash
+export ASPNETCORE_ENVIRONMENT=Production
+export ConnectionStrings__DefaultConnection="Host=...;Database=orderflow_db;Username=...;Password=..."
+export JWT__KEY="<at least 64 random characters>"
+export PLATFORM__BASEURL="https://platform.example"
+export PLATFORM__INTEGRATIONKEY="<from Platform, not the Development key>"
+export CORS__ORIGINS="https://app.example"
+export DataProtection__KeysPath="/var/lib/orderflow/keys"
+```
+
+Do not set `Include Error Detail=true` on the Production connection string. Persist `DataProtection__KeysPath` on a volume so encrypted license keys survive restarts.
+
+```bash
+dotnet publish backend/src/OrderFlow.Api/OrderFlow.Api.csproj -c Release
+cd frontend && npm run build
+```
+
+`ng build` uses the production configuration by default. The SPA calls same-origin `/api/...`; put nginx or Caddy in front and proxy `/api` to the OrderFlow API. Health check: `GET /health`.
 
 ## Tests
 

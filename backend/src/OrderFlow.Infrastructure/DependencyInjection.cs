@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OrderFlow.Application.Common.Interfaces;
+using OrderFlow.Infrastructure.Hosting;
 using OrderFlow.Infrastructure.Identity;
 using OrderFlow.Infrastructure.Persistence;
 using OrderFlow.Infrastructure.Persistence.Repositories;
@@ -16,13 +19,16 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
+        StartupConfiguration.Validate(configuration, environment.EnvironmentName);
+
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing.");
 
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-        services.AddDataProtection();
+        AddDataProtectionKeys(services, configuration, environment);
         services.AddHttpContextAccessor();
 
         services.AddScoped<IShopRepository, ShopRepository>();
@@ -37,12 +43,6 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<PlatformOptions>(configuration.GetSection(PlatformOptions.SectionName));
-
-        var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
-            ?? throw new InvalidOperationException("Jwt configuration is missing.");
-
-        if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
-            throw new InvalidOperationException("Jwt:Key must be at least 32 characters.");
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer();
@@ -60,5 +60,26 @@ public static class DependencyInjection
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Persists Data Protection keys so encrypted license payloads survive process restarts.
+    /// Testing keeps ephemeral keys so the suite does not write to disk.
+    /// </summary>
+    private static void AddDataProtectionKeys(
+        IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var dataProtection = services.AddDataProtection();
+        if (environment.IsEnvironment("Testing"))
+            return;
+
+        var keysPath = configuration["DataProtection:KeysPath"];
+        if (string.IsNullOrWhiteSpace(keysPath))
+            keysPath = Path.Combine(environment.ContentRootPath, "dataprotection-keys");
+
+        Directory.CreateDirectory(keysPath);
+        dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
     }
 }

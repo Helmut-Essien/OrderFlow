@@ -39,7 +39,7 @@ Production: prefer env vars (`PLATFORM__INTEGRATIONKEY`, `JWT__KEY`, etc.) — s
 
 ## Current HTTP API
 
-JSON camelCase. Auth rate limit policy `auth`: 20 req/min.
+JSON camelCase. Auth rate limit policy `auth`: 20 req/min **per client IP** (not global). Anonymous `GET /health` (liveness).
 
 | Method | Route | Auth | Handler |
 |--------|-------|------|---------|
@@ -52,6 +52,7 @@ JSON camelCase. Auth rate limit policy `auth`: 20 req/min.
 | PUT | `/api/products/{id}` | JWT | `UpdateProductCommand` (`ExpectedVersion`; does not change stock) |
 | POST | `/api/products/{id}/stock` | JWT | `AdjustStockCommand` (`QuantityDelta`, `ExpectedVersion`, `Notes?`) |
 | GET | `/api/dashboard` | JWT | `GetDashboardQuery` |
+| GET | `/health` | Anonymous | ASP.NET health checks (process up) |
 
 Sign-up body: `licenseKey`, `email`, `password`, `shopName`, `displayName?`, `phone?`.  
 Login body: `email`, `password` (no license key).  
@@ -112,9 +113,9 @@ Features/{Name}/
   {Verb}{Name}CommandValidator.cs # required for every write; lengths match Shared DTO + EF
 ```
 
-Register happens automatically via `AddMediatR` + `AddValidatorsFromAssembly`. Controllers send MediatR requests only.
+Register happens automatically via `AddMediatR` + `AddValidatorsFromAssembly`. Controllers send MediatR requests only. List/get handlers: `AsNoTracking`, page/cap results, filter in SQL ([performance.md](performance.md)).
 
-New external systems: interface in `Application/Common/Interfaces`, adapter in `Infrastructure/{Area}/`.
+New external systems: interface in `Application/Common/Interfaces`, adapter in `Infrastructure/{Area}/`. Timeouts on outbound HTTP. Webhooks verify signatures before any write ([production.md](production.md)).
 
 Passwords and other secrets: always set `MaximumLength` on login/verify commands too (DoS / payload bound), not only signup.
 
@@ -183,6 +184,8 @@ Copy and tick when implementing a feature entity:
 - [ ] Submit trim / lowercase email / omit empty optionals
 - [ ] Validator unit tests; migration if schema changed
 - [ ] XML docs on public C# types/members; JSDoc on exported Angular APIs
+- [ ] Production: no new secrets in `appsettings.json`; extend `StartupConfiguration` if a Production-only setting is required ([production.md](production.md))
+- [ ] Performance: paged list, `AsNoTracking` reads, EF indexes, Angular `OnPush` + `@for track` ([performance.md](performance.md))
 ```
 
 ## Frontend conventions
@@ -214,7 +217,9 @@ frontend/src/app/
       routes.ts
     # Slice 3+: orders/{ data/, pages/, routes.ts }
   app.routes.ts       # compose lazy feature routes
-  environments/environment.ts   # apiUrl http://localhost:5180
+  environments/
+    environment.ts              # apiUrl http://localhost:5180 (ng serve)
+    environment.production.ts   # apiUrl '' same-origin /api (ng build)
 ```
 
 ### Routing
@@ -233,16 +238,17 @@ Future children under `/app`: `orders`, `settings` (add nav links in shell only 
 
 ### Rules
 
-- Standalone components; each feature exports `ROUTES` / `AUTH_ROUTES` / `DASHBOARD_ROUTES` from `routes.ts`
+- Standalone components with `ChangeDetectionStrategy.OnPush`; each feature exports `ROUTES` / `AUTH_ROUTES` / `DASHBOARD_ROUTES` from `routes.ts`
 - JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`
 - Tailwind tokens: `forest`, `forest-dark`, `gold`, `paper`, `ink`; font Source Sans 3 (Fraunces display on landing headlines only)
-- **Signals:** local UI in components; shop/plan in `ShopStateService` (updated by `AuthService` on login/me/logout). No NgRx. Use `takeUntilDestroyed()` for RxJS cleanup.
+- **Signals:** local UI in components; shop/plan in `ShopStateService` (updated by `AuthService` on login/me/logout). No NgRx. Use `takeUntilDestroyed()` for RxJS cleanup. Debounce search (~300ms) before list HTTP. `@for` tracks entity `id`.
 - **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models + `*_FIELD_LIMITS` for domain features. Auth HTTP + `AUTH_FIELD_LIMITS` stay in `core/auth`.
 - **DTO mirror:** TypeScript interfaces match `OrderFlow.Shared/DTOs` camelCase — never Domain entities. Limits constants must match Shared `[StringLength]` values.
 - **Form constraints:** never rely on API 400 alone; client validators + `maxlength` must match backend before submit.
 - When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav (bottom nav + sidebar, `lg` split), apply the constraints checklist above.
 - **Mobile layout:** follow [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md) — sidebar only at `lg+`, cards until `lg`, `w-full sm:w-auto` primary actions, `env(safe-area-inset-*)` on sticky/fixed chrome.
 - **Documentation:** JSDoc on exported feature APIs — see [documentation.md](documentation.md).
+- **Production SPA:** `environment.production.ts` keeps `apiUrl: ''`; `angular.json` production `fileReplacements` must stay. See [production.md](production.md) and [performance.md](performance.md).
 
 ## Documentation conventions
 
@@ -250,7 +256,7 @@ XML/JSDoc and inline-comment rules: [documentation.md](documentation.md).
 
 ## Logging
 
-Serilog is wired in `Program.cs` via `UseSerilog()`. `SecretRedactingPolicy` redacts `LicenseKey`, `Password`, `ConfirmPassword`, `IntegrationKey`, and `ProtectedLicenseKey`. Console in Development/Production; rolling file `logs/orderflow-.log` (gitignored). Testing environment: Warning minimum, no console/file sinks. Never log plaintext license keys or integration keys. External HTTP (Paystack, WhatsApp) should log sanitized request/response at Information when those adapters ship.
+Serilog is wired in `Program.cs` via `UseSerilog()`. `SecretRedactingPolicy` redacts `LicenseKey`, `Password`, `ConfirmPassword`, `IntegrationKey`, and `ProtectedLicenseKey`. Console in Development and Production; rolling file `logs/orderflow-.log` in **Development only** (gitignored). Production hosts collect stdout. Testing environment: Warning minimum, no console/file sinks. Never log plaintext license keys or integration keys. External HTTP (Paystack, WhatsApp) should log sanitized request/response at Information when those adapters ship.
 
 ## Ports and config
 
@@ -262,7 +268,9 @@ Serilog is wired in `Program.cs` via `UseSerilog()`. `SecretRedactingPolicy` red
 | Platform API | http://localhost:5176 |
 | JWT issuer / audience | `OrderFlow.Api` / `OrderFlow.Frontend` |
 
-CORS origins: `Cors:Origins` (default `http://localhost:4200`).
+CORS origins: `Cors:Origins` JSON array or comma-separated `CORS__ORIGINS`. Development default `http://localhost:4200`. Production empty = same-origin SPA only (`CorsOrigins.Resolve`).
+
+Production refuses to start on Development JWT/integration keys, `Password=orderflow_dev`, `Include Error Detail`, or a localhost Platform URL (`StartupConfiguration`). JWT key ≥ 64 characters. Persist Data Protection keys (`DataProtection__KeysPath`). Dev secrets live in `appsettings.Development.json`; that file is not published.
 
 ### Environment variable mapping
 
@@ -274,11 +282,13 @@ Use `__` (double underscore) for nested .NET config (e.g. `Platform:BaseUrl` →
 | `PLATFORM__BASEURL` | **Yes** | http://localhost:5176 | Platform API base |
 | `PLATFORM__INTEGRATIONKEY` | **Yes** | (Dev key) | X-Integration-Key header |
 | `JWT__KEY` | **Yes** | (Dev key) | Token signing (≥64 chars in prod) |
-| `CORS__ORIGINS` | No | http://localhost:4200 | Comma-separated allowed origins |
-| `ConnectionStrings__DefaultConnection` | **Yes** (non-Dev) | Docker compose value | PostgreSQL |
+| `CORS__ORIGINS` | No | (empty in base json; Dev uses localhost:4200) | Comma-separated allowed origins |
+| `ConnectionStrings__DefaultConnection` | **Yes** (non-Dev) | Docker compose value | PostgreSQL (no `Include Error Detail` in Production) |
+| `DataProtection__KeysPath` | **Yes** (Production volume) | `dataprotection-keys` | License-key encryption key ring |
 
 ## Testing strategy
 
 - **Unit tests:** xUnit, NSubstitute, FluentAssertions. Each command/query needs a handler unit test and a validator test. Mock `IPlatformLicenseClient` and other adapters.
 - **Integration tests:** **Testcontainers.PostgreSql** (not EF InMemory). InMemory does not enforce relational constraints and diverges from PostgreSQL. Cover the full HTTP pipeline (Auth → Controller → Handler → DB) with an ephemeral Postgres container in the test fixture.
 - Testing environment: skip host `MigrateAsync` as appropriate; apply migrations against the container; stub external HTTP clients.
+- New Production fail-fast rules: unit-test `StartupConfiguration`. New list endpoints: assert page size is capped.

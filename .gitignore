@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# ASP.NET Data Protection keys (license-key encryption). Never commit.
+dataprotection-keys/
+
 # User-specific files
 *.rsuser
 *.suo

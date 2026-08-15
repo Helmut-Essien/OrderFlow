@@ -4,8 +4,9 @@ description: >-
   OrderFlow visual design system: Forest/Gold/Paper tokens, Source Sans 3
   (Fraunces display on landing headlines only), atmosphere textures (film grain,
   soft dot-mesh), elevation, buttons, cards, forms, status chips, illustration
-  flair. Use when styling Angular/Tailwind UI, building components, marketing
-  pages, auth, or brand/visual work.
+  flair. Keep motion GPU-cheap (transform/opacity) and CSS within the Angular
+  production budget. Use when styling Angular/Tailwind UI, building components,
+  marketing pages, auth, or brand/visual work.
 ---
 
 # OrderFlow Design System
@@ -98,7 +99,7 @@ Optional: monospace for SKUs / order IDs (`font-mono` system stack) — not for 
 
 ## Motion & illustration flair
 
-Ship **2–3 intentional motions** on brand/marketing surfaces; keep ops tables calm.
+Ship **2–3 intentional motions** on brand/marketing surfaces; keep ops tables calm. Prefer compositor-only `transform`/`opacity`; never animate layout (`top`/`left`/`height`) on lists. Animate `transform` and `opacity` only (compositor-friendly). No per-row motion on tables. `prefers-reduced-motion: reduce` → static.
 
 | Allowed | Avoid |
 |---------|--------|
@@ -176,3 +177,5 @@ Fully rounded pills; soft tint bg + strong text.
 - [ ] GHS formatting; status as pills
 - [ ] `prefers-reduced-motion` respected for illustration loops
 - [ ] Custom CSS/utilities commented with why (not a restatement of the selector)
+- [ ] Component CSS stays within `angular.json` production `anyComponentStyle` budget (`npm run build` must pass)
+- [ ] Motion uses `transform`/`opacity` only; no layout-thrashing animation on lists

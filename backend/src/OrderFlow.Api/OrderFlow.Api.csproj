@@ -22,4 +22,9 @@
     <ProjectReference Include="..\OrderFlow.Shared\OrderFlow.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Testing.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>
