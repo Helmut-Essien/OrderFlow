@@ -202,11 +202,8 @@ export class ProductFormComponent {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (product) => {
-          this.adjusting.set(false);
-          this.stockForm.reset({ quantityDelta: null, notes: '' });
-          this.patchProduct(product);
-        },
+        // Same as Save: skip form patch so signal writes cannot cancel the route change.
+        next: () => this.goToInventory(),
         error: (err: HttpErrorResponse) => {
           this.adjusting.set(false);
           this.stockError.set(apiErrorMessage(err));
@@ -217,9 +214,10 @@ export class ProductFormComponent {
       });
   }
 
-  /** Leaves the form after a successful create/update so the list shows the saved SKU. */
+  /** Leaves the form after a successful create, catalog save, or stock adjust so Inventory shows the new qty. */
   private goToInventory(): void {
     this.submitting.set(false);
+    this.adjusting.set(false);
     void this.router.navigateByUrl('/app/products');
   }
 

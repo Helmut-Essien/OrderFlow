@@ -11,7 +11,7 @@ Existing host wiring lives in `OrderFlow.Api/Program.cs`, `StartupConfiguration`
 3. Production must **fail fast** via `StartupConfiguration.Validate` — never boot on the Development JWT key, Development integration key, `Password=orderflow_dev`, `Include Error Detail`, or a localhost Platform URL. JWT ≥ 64 characters in Production.
 4. New env vars use `__` nesting and are documented in [reference.md](reference.md) **and** [README.md](../../../README.md) in the same slice.
 5. `dotnet test OrderFlow.sln` and `npm run build` (production) must succeed. Do not ship a CSS budget that fails `ng build`.
-6. Honest empties and zeros until the owning slice exists — no fake charts, sample orders, or hidden “coming soon” APIs.
+6. Honest empties and zeros until the owning slice exists — no fake charts, sample orders, hidden “coming soon” APIs, `href="#"`, or `wa.me/` without a real number. Legal/support labels may be non-links until those pages exist.
 
 ## Backend
 
@@ -21,7 +21,7 @@ Existing host wiring lives in `OrderFlow.Api/Program.cs`, `StartupConfiguration`
 - **Webhooks (WhatsApp / Paystack):** verify signature **before** parsing or writing. Fail → 401 immediately. Timeouts on outbound HTTP (`HttpClient` ≤ 10s unless the provider requires more).
 - **Host:** Production gets HSTS, HTTPS redirection, security headers (`nosniff`, `DENY` frame, `no-store`), anonymous `GET /health`, Kestrel JSON body cap (128 KB until file uploads exist). OpenAPI mapped in Development only.
 - **Data Protection:** persist keys to `DataProtection:KeysPath` (volume in prod, gitignored). Testing may use ephemeral keys.
-- **CORS:** `CorsOrigins.Resolve` — JSON array **or** comma-separated `CORS__ORIGINS`. Empty origins = same-origin SPA only (no `localhost` default in Production).
+- **CORS:** `CorsOrigins.Resolve` — JSON array **or** comma-separated `CORS__ORIGINS`. Empty origins = same-origin SPA only (no `localhost` default in Production). **`UseCors` must run before exception-handling middleware** so 400/401/409 JSON still gets `Access-Control-Allow-Origin` (local `ng serve` is cross-origin). Integration-test a failed login/signup with `Origin: http://localhost:4200`.
 - **Logging:** console in Production (12-factor). File sink is Development only. Do not log request bodies that contain secrets.
 - **Errors:** unhandled exceptions → 500 without internals. `Include Error Detail` is Development-only on the connection string.
 - **Migrations:** generate from EF config; never hand-edit the snapshot. Startup `MigrateAsync` is OK for single-instance MVP; do not add a second ad-hoc schema path.

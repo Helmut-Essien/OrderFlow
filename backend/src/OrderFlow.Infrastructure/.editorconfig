@@ -1,0 +1,3 @@
+# EF migrations are generated; never hand-edit them to add XML (CS1591).
+[Persistence/Migrations/**.cs]
+dotnet_diagnostic.CS1591.severity = none

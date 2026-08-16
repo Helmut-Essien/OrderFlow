@@ -7,6 +7,7 @@ namespace OrderFlow.Application.Features.Auth.Login;
 /// </summary>
 public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
+    /// <summary>Binds login payload bounds (email 320, password max 128 for DoS).</summary>
     public LoginCommandValidator()
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);

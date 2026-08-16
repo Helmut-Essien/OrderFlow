@@ -6,6 +6,7 @@ namespace OrderFlow.Application.Features.Products.ListProducts;
 /// <summary>Bounds search/category length and pagination (page ≥ 1, pageSize 1–100).</summary>
 public sealed class ListProductsQueryValidator : AbstractValidator<ListProductsQuery>
 {
+    /// <summary>Binds search/category length and pageSize 1–100.</summary>
     public ListProductsQueryValidator()
     {
         RuleFor(x => x.Search).MaximumLength(ProductConstraints.NameMaxLength);

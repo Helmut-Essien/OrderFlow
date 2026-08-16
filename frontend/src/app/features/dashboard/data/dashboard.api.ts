@@ -8,6 +8,7 @@ import { DashboardDto } from './dashboard.models';
 export class DashboardApi {
   private readonly http = inject(HttpClient);
 
+  /** Loads shop KPIs. Sales/orders/WhatsApp are 0 until those slices exist. */
   get() {
     return this.http.get<DashboardDto>(`${environment.apiUrl}/api/dashboard`);
   }

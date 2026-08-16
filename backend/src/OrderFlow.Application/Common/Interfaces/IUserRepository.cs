@@ -11,5 +11,6 @@ public interface IUserRepository
     /// <summary>Looks up by already-normalized (lowercase) email.</summary>
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
+    /// <summary>Stages a new user for insert. Call <see cref="IUnitOfWork.SaveChangesAsync"/> to persist.</summary>
     void Add(User user);
 }

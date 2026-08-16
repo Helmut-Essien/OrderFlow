@@ -12,6 +12,7 @@ public sealed class ListProductsQueryHandler(
     ICurrentUser currentUser,
     IProductRepository products) : IRequestHandler<ListProductsQuery, ProductListResponse>
 {
+    /// <summary>Pages the JWT shop catalog; categories and active count are shop-wide, not page-scoped.</summary>
     public async Task<ProductListResponse> Handle(ListProductsQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))
@@ -28,7 +29,7 @@ public sealed class ListProductsQueryHandler(
 
         return new ProductListResponse
         {
-            Items = result.Items.Select(ProductMapping.ToDto).ToList(),
+            Items = result.Items,
             TotalCount = result.TotalCount,
             Page = page,
             PageSize = pageSize,

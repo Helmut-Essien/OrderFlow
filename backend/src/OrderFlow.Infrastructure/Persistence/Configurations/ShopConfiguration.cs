@@ -9,6 +9,7 @@ namespace OrderFlow.Infrastructure.Persistence.Configurations;
 /// </summary>
 public class ShopConfiguration : IEntityTypeConfiguration<Shop>
 {
+    /// <summary>Applies license-hash uniqueness and plan snapshot columns.</summary>
     public void Configure(EntityTypeBuilder<Shop> builder)
     {
         builder.ToTable("Shops", table =>

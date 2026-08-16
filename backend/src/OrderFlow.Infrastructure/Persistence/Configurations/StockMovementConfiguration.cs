@@ -7,6 +7,7 @@ namespace OrderFlow.Infrastructure.Persistence.Configurations;
 /// <summary>Stock movement audit table. <c>Type</c> is stored as a string with a CHECK of the enum set.</summary>
 public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement>
 {
+    /// <summary>Applies resulting-stock range and movement-type CHECK.</summary>
     public void Configure(EntityTypeBuilder<StockMovement> builder)
     {
         builder.ToTable("StockMovements", table =>

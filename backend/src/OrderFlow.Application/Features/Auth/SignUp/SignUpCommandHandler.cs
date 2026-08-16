@@ -22,6 +22,7 @@ public sealed class SignUpCommandHandler(
     ILicenseKeyProtector licenseKeyProtector,
     IJwtTokenService jwt) : IRequestHandler<SignUpCommand, AuthResponse>
 {
+    /// <summary>Creates shop + owner in one save, then issues a JWT. License plaintext is never persisted.</summary>
     public async Task<AuthResponse> Handle(SignUpCommand request, CancellationToken cancellationToken)
     {
         var validation = await platform.ValidateAsync(request.LicenseKey.Trim(), cancellationToken);

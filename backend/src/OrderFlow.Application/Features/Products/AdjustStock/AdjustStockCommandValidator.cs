@@ -6,6 +6,7 @@ namespace OrderFlow.Application.Features.Products.AdjustStock;
 /// <summary>Rejects a zero delta and bounds notes/quantity to <see cref="ProductConstraints"/>.</summary>
 public sealed class AdjustStockCommandValidator : AbstractValidator<AdjustStockCommand>
 {
+    /// <summary>Rejects a zero delta and binds notes/quantity to <see cref="ProductConstraints"/>.</summary>
     public AdjustStockCommandValidator()
     {
         RuleFor(x => x.ProductId).NotEmpty().MaximumLength(26);

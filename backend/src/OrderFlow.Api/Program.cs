@@ -130,9 +130,10 @@ try
     if (app.Environment.IsDevelopment())
         app.MapOpenApi();
 
+    // CORS must wrap exception handling so 400/401/409 JSON still gets Allow-Origin (ng serve is cross-origin).
+    app.UseCors("Frontend");
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseMiddleware<SecurityHeadersMiddleware>();
-    app.UseCors("Frontend");
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseRateLimiter();

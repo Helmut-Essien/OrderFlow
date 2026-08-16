@@ -9,5 +9,6 @@ public sealed record JwtTokenResult(string Token, DateTime ExpiresAt);
 /// <summary>Creates shop-scoped JWTs with <c>sub</c>, <c>shopId</c>, <c>role</c>, and <c>planName</c> claims.</summary>
 public interface IJwtTokenService
 {
+    /// <summary>Builds a signed JWT for the user in the given shop/plan. Does not persist anything.</summary>
     JwtTokenResult Create(User user, Shop shop, PlanQuota plan);
 }

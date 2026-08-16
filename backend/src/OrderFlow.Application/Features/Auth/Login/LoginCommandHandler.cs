@@ -21,6 +21,7 @@ public sealed class LoginCommandHandler(
     /// </summary>
     private const string DummyPasswordHash = "$2a$11$bePeA9FXpCtiTvP7RSzQCOyAiGn7sNxR97CyB.FjcI.wJM7RYG8Ty";
 
+    /// <summary>Verifies password with constant cost even when the email is unknown, then issues a JWT.</summary>
     public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();

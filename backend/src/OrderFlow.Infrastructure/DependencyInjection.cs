@@ -17,6 +17,7 @@ namespace OrderFlow.Infrastructure;
 /// <summary>Wires EF, JWT bearer, Data Protection, repositories, and the Platform HTTP client.</summary>
 public static class DependencyInjection
 {
+    /// <summary>Registers EF, JWT bearer, Data Protection, repositories, and the Platform HTTP client.</summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration,

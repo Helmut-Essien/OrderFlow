@@ -169,6 +169,44 @@ public class ProductEndpointsTests
     }
 
     [Fact]
+    public async Task Create_SerializesConcurrentCreates_AtStarterLimit()
+    {
+        var client = _factory.CreateClient();
+        var signUp = await client.PostAsJsonAsync("/api/auth/signup", new SignUpRequest
+        {
+            LicenseKey = $"ORDERFLOW-STARTER-{Guid.NewGuid():N}",
+            Email = $"starter-race-{Guid.NewGuid():N}@shop.example",
+            Password = "ChangeMe123",
+            ShopName = "Starter Shop"
+        });
+        signUp.EnsureSuccessStatusCode();
+        var auth = await signUp.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.Token);
+
+        for (var i = 0; i < 49; i++)
+        {
+            var created = await client.PostAsJsonAsync("/api/products", ValidProduct($"SKU-{i:000}"));
+            created.EnsureSuccessStatusCode();
+        }
+
+        var firstTask = client.PostAsJsonAsync("/api/products", ValidProduct("SKU-049"));
+        var secondTask = client.PostAsJsonAsync("/api/products", ValidProduct("SKU-050"));
+        var raced = await Task.WhenAll(firstTask, secondTask);
+
+        var statuses = raced.Select(r => r.StatusCode).ToArray();
+        Assert.Contains(HttpStatusCode.Created, statuses);
+        Assert.Contains(HttpStatusCode.Forbidden, statuses);
+    }
+
+    [Fact]
+    public async Task List_RejectsPageSizeAbove100()
+    {
+        var client = await AuthenticatedClientAsync($"page-{Guid.NewGuid():N}@shop.example");
+        var response = await client.GetAsync("/api/products?pageSize=101");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Create_AllowsNewProduct_AfterDeactivatingAtStarterLimit()
     {
         var client = _factory.CreateClient();

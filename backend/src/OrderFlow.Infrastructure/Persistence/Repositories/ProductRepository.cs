@@ -3,6 +3,8 @@ using OrderFlow.Application.Common.Interfaces;
 using OrderFlow.Domain;
 using OrderFlow.Domain.Entities;
 using OrderFlow.Infrastructure.Persistence;
+using OrderFlow.Shared.DTOs.Dashboard;
+using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Infrastructure.Persistence.Repositories;
 
@@ -12,16 +14,19 @@ namespace OrderFlow.Infrastructure.Persistence.Repositories;
 /// </summary>
 public sealed class ProductRepository(AppDbContext db) : IProductRepository
 {
+    /// <inheritdoc />
     public Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         return db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task<Product?> GetTrackedByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         return db.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default)
     {
         return db.Products.AsNoTracking().FirstOrDefaultAsync(
@@ -29,6 +34,7 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
             cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<ProductListResult> ListAsync(
         string shopId,
         string? search,
@@ -60,16 +66,35 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
             .ThenBy(p => p.Sku)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(p => new ProductDto
+            {
+                Id = p.Id,
+                ShopId = p.ShopId,
+                Name = p.Name,
+                Sku = p.Sku,
+                Category = p.Category,
+                Price = p.Price,
+                Stock = p.Stock,
+                LowStockThreshold = p.LowStockThreshold,
+                IsActive = p.IsActive,
+                // IsLowStock is ignored on the entity; compute here so EF can translate it.
+                IsLowStock = p.Stock <= p.LowStockThreshold,
+                Version = p.Version,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
+            })
             .ToListAsync(cancellationToken);
 
         return new ProductListResult(items, total);
     }
 
+    /// <inheritdoc />
     public Task<int> CountByShopAsync(string shopId, CancellationToken cancellationToken = default)
     {
         return db.Products.CountAsync(p => p.ShopId == shopId && p.IsActive, cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListCategoriesAsync(
         string shopId,
         CancellationToken cancellationToken = default)
@@ -83,7 +108,8 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Product>> GetLowStockAsync(
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<LowStockItemDto>> GetLowStockAsync(
         string shopId,
         CancellationToken cancellationToken = default)
     {
@@ -93,11 +119,21 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
             .OrderBy(p => p.Stock)
             .ThenBy(p => p.Name)
             .Take(50)
+            .Select(p => new LowStockItemDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Sku = p.Sku,
+                Stock = p.Stock,
+                LowStockThreshold = p.LowStockThreshold
+            })
             .ToListAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public void Add(Product product) => db.Products.Add(product);
 
+    /// <inheritdoc />
     public async Task<StockAdjustmentResult?> TryAdjustStockAsync(
         string productId,
         string shopId,

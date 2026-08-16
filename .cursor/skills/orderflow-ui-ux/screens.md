@@ -48,7 +48,7 @@ Marketing convert → signup. Brand-forward, illustrated, warm.
 ### Below fold
 - Features: WhatsApp Ordering | Smart Inventory | Paystack payments
 - Pricing: Starter / Growth / Business — **limits from product skill**
-- Footer: Privacy, Terms, WhatsApp support
+- Footer: Privacy and Terms as **non-link labels** until legal pages exist (never `href="#"`). WhatsApp support only with a real number — not `wa.me/` empty.
 
 ### Responsive
 - Mobile: single column, hamburger, sticky Get started with `env(safe-area-inset-bottom)` + spacer
@@ -92,6 +92,7 @@ Browse/search products; jump to add/edit; spot low stock.
 - Cards until `lg` (include category); table from `lg`
 - Columns: Product, SKU (mono ok), Category, Price GHS, Qty, Status, Actions
 - Pagination footer
+- Empty catalog vs no search/category matches (different copy; Add Product only on a true empty catalog)
 - `data/`: models mirroring `ProductDto` + `product.api.ts`
 
 ---
@@ -107,7 +108,7 @@ Create or update one SKU for WhatsApp selling.
 - Back to Inventory (`/app/products`)
 - Title + one support line
 - Upload zone + fields (name*, SKU+Generate, category, price GHS*, stock, low-stock threshold + helper)
-- Cancel | Save product (forest)
+- Cancel | Save product (forest). Do not display `version` to the shop owner.
 
 ### Responsive
 - Mobile: vertical stack; SKU + Generate stack until `sm`; Save/Cancel/Update **full-width** (`flex-col-reverse` so Save is first)

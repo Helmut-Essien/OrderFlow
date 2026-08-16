@@ -10,6 +10,7 @@ public sealed class GetProductQueryHandler(
     ICurrentUser currentUser,
     IProductRepository products) : IRequestHandler<GetProductQuery, ProductDto>
 {
+    /// <summary>Returns 404 when the id is missing or belongs to another shop (EF filter hides the row).</summary>
     public async Task<ProductDto> Handle(GetProductQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))

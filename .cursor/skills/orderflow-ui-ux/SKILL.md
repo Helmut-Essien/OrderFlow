@@ -147,7 +147,7 @@ Apply these when generating Orders, Settings, or any `/app` page. Copy patterns 
 | Touch | ≥ 44×44px |
 | Feedback | Inline banners; plan-unrecognized amber callout |
 | Loading | Disable CTA + “Please wait…” |
-| Empty | One sentence + one CTA |
+| Empty | One sentence + one CTA. **Catalog empty ≠ search miss** — filtered lists say “no matches”, not “add the first SKU”. |
 | Search | Global orders/products; inventory SKU/name |
 
 ## Angular notes
@@ -182,6 +182,8 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Zof-style console redesign (path chrome as primary UI, navy/orange, sterile “control plane” as the whole brand)
 - Ignoring WhatsApp pending on home
 - Gold for Save / Sign in
+- Showing `version` / concurrency tokens in shop-facing copy
+- `href="#"` Privacy/Terms or `https://wa.me/` with no number
 - Texture on tables/forms
 - Marketing pricing that contradicts Platform plans
 - Desktop-only layouts, or app sidebar at `md` (landscape phones)

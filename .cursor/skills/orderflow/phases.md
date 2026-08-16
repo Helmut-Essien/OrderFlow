@@ -14,11 +14,11 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 
 ## Slice 2 acceptance
 
-- CRUD products scoped to Shop; enforce `PlanQuota.MaxProducts`
-- `Product` includes concurrency token (`Version` long) from creation
+- CRUD products scoped to Shop; enforce `PlanQuota.MaxProducts` (**active** SKUs; lock + count + insert in one transaction)
+- `Product` includes concurrency token (`Version` long) from creation — API-only, not shop-facing UI
 - Manual stock adjustment writes `StockMovement` via **atomic** stock update (`Stock >= qty` + expected version); `rows affected = 0` → `ConcurrencyAppException`
-- Dashboard cards: today’s sales / order count / pending WhatsApp are 0 until slice 3; low-stock list is live
-- Angular product feature: `features/products/{data,pages,routes}` under `/app/products`; shell nav Inventory; Signals for list/form state; DTO models mirror `Shared/DTOs`
+- Dashboard cards: today’s sales / order count / pending WhatsApp are 0 until slice 3; low-stock list is live (SQL-projected DTOs)
+- Angular product feature: `features/products/{data,pages,routes}` under `/app/products`; shell nav Inventory; Signals for list/form state; DTO models mirror `Shared/DTOs`; inventory empty catalog ≠ no search matches
 - **Full-stack constraints** for Product fields: Domain + EF CHECKs/MaxLength + FluentValidation + Shared DTO annotations + Angular `PRODUCT_FIELD_LIMITS` / validators / `maxlength`
 
 ## Slice 3 notes (stock)

@@ -16,10 +16,13 @@ public sealed record PlanQuota(
     bool IsUnrecognized = false,
     string? OriginalName = null)
 {
+    /// <summary>50 active SKUs, 300 orders/month, 1 user, no AI.</summary>
     public static PlanQuota Starter => new("Starter", 50, 300, 1, false);
 
+    /// <summary>300 active SKUs, unlimited orders, 3 users, no AI.</summary>
     public static PlanQuota Growth => new("Growth", 300, null, 3, false);
 
+    /// <summary>Unlimited SKUs and orders, 10 users, AI features enabled.</summary>
     public static PlanQuota Business => new("Business", null, null, 10, true);
 
     /// <summary>

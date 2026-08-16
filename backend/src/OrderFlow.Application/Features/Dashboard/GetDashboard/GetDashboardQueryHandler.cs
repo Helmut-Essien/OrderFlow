@@ -12,6 +12,7 @@ public sealed class GetDashboardQueryHandler(
     ICurrentUser currentUser,
     IProductRepository products) : IRequestHandler<GetDashboardQuery, DashboardDto>
 {
+    /// <summary>Returns live low-stock plus placeholder sales/orders/WhatsApp counts until those slices exist.</summary>
     public async Task<DashboardDto> Handle(GetDashboardQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))
@@ -26,14 +27,7 @@ public sealed class GetDashboardQueryHandler(
             OrderCount = 0,
             PendingWhatsAppCount = 0,
             LowStockCount = lowStock.Count,
-            LowStock = lowStock.Select(p => new LowStockItemDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Sku = p.Sku,
-                Stock = p.Stock,
-                LowStockThreshold = p.LowStockThreshold
-            }).ToList()
+            LowStock = lowStock
         };
     }
 }

@@ -20,6 +20,7 @@ public sealed class PlatformLicenseClient(
         PropertyNameCaseInsensitive = true
     };
 
+    /// <inheritdoc />
     public async Task<LicenseValidationResult> ValidateAsync(
         string licenseKey,
         CancellationToken cancellationToken = default)

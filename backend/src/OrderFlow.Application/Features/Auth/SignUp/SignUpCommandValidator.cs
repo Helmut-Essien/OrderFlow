@@ -5,6 +5,7 @@ namespace OrderFlow.Application.Features.Auth.SignUp;
 /// <summary>Signup field limits matching Shared DTOs. Password min 8 / max 128.</summary>
 public sealed class SignUpCommandValidator : AbstractValidator<SignUpCommand>
 {
+    /// <summary>Binds signup field limits to match Shared DTOs and Angular <c>AUTH_FIELD_LIMITS</c>.</summary>
     public SignUpCommandValidator()
     {
         RuleFor(x => x.LicenseKey).NotEmpty().MaximumLength(100);

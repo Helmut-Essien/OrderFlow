@@ -60,7 +60,7 @@ Auth response: `token`, `expiresAt`, `shopId`, `shopName`, `userId`, `email`, `d
 
 Product create: `name`, `sku` (stored uppercase), `category?`, `price`, `stock`, `lowStockThreshold`.  
 Product update: same except no `stock`; plus `isActive`, `expectedVersion`.  
-SKU unique per shop. Create is blocked at `PlanQuota.MaxProducts` (403). Duplicate SKU → 409. Stale `expectedVersion` → 409 `{ "code": "concurrency" }`.
+SKU unique per shop. Create is blocked at `PlanQuota.MaxProducts` (403). **Cap counts active SKUs only** — inactive products do not consume a slot (deactivating frees one). Duplicate SKU → 409. Stale `expectedVersion` → 409 `{ "code": "concurrency" }`. `Version` is an API concurrency token — do not show it in shop-facing UI.
 
 Dashboard: `todaysSales`, `orderCount`, `pendingWhatsAppCount` are 0 until orders exist; `lowStock` is active products with `stock <= lowStockThreshold` (max 50).
 
@@ -182,10 +182,12 @@ Copy and tick when implementing a feature entity:
 - [ ] Shared DTO annotations match
 - [ ] Angular FIELD_LIMITS + validators + maxlength + errors
 - [ ] Submit trim / lowercase email / omit empty optionals
-- [ ] Validator unit tests; migration if schema changed
-- [ ] XML docs on public C# types/members; JSDoc on exported Angular APIs
+- [ ] Validator unit tests for **every** write/query validator (auth included); migration if schema changed
+- [ ] List endpoints: assert `pageSize` above 100 is 400
+- [ ] XML docs on **every** public C# member (CS1591 is an error); JSDoc on **every** exported HTTP method (`list`/`get`/`create`/`update`/…)
 - [ ] Production: no new secrets in `appsettings.json`; extend `StartupConfiguration` if a Production-only setting is required ([production.md](production.md))
-- [ ] Performance: paged list, `AsNoTracking` reads, EF indexes, Angular `OnPush` + `@for track` ([performance.md](performance.md))
+- [ ] Performance: paged list, `AsNoTracking` reads, **SQL `Select` to DTOs** on list/dashboard, EF indexes, Angular `OnPush` + `@for track` ([performance.md](performance.md))
+- [ ] Plan-cap writes: lock + count + insert in one transaction; integration-test concurrent creates at the cap
 ```
 
 ## Frontend conventions
@@ -291,4 +293,4 @@ Use `__` (double underscore) for nested .NET config (e.g. `Platform:BaseUrl` →
 - **Unit tests:** xUnit, NSubstitute, FluentAssertions. Each command/query needs a handler unit test and a validator test. Mock `IPlatformLicenseClient` and other adapters.
 - **Integration tests:** **Testcontainers.PostgreSql** (not EF InMemory). InMemory does not enforce relational constraints and diverges from PostgreSQL. Cover the full HTTP pipeline (Auth → Controller → Handler → DB) with an ephemeral Postgres container in the test fixture.
 - Testing environment: skip host `MigrateAsync` as appropriate; apply migrations against the container; stub external HTTP clients.
-- New Production fail-fast rules: unit-test `StartupConfiguration`. New list endpoints: assert page size is capped.
+- New Production fail-fast rules: unit-test `StartupConfiguration`. New list endpoints: assert page size is capped (HTTP 400). Auth/CORS: failed login with `Origin` must still return `Access-Control-Allow-Origin`.

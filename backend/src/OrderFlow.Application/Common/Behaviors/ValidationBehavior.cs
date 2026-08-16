@@ -10,6 +10,9 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    /// <summary>
+    /// Runs all validators for <typeparamref name="TRequest"/> and throws <see cref="ValidationException"/> on the first failure set.
+    /// </summary>
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,

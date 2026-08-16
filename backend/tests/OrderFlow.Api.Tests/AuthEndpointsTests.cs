@@ -67,4 +67,21 @@ public class AuthEndpointsTests
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task LoginFailure_IncludesCorsAllowOrigin_ForDevSpa()
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Origin", "http://localhost:4200");
+
+        var response = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = "nobody@shop.example",
+            Password = "wrong-password"
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins));
+        Assert.Equal("http://localhost:4200", origins.Single());
+    }
 }

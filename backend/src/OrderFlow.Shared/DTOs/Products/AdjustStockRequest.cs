@@ -14,6 +14,7 @@ public class AdjustStockRequest
     [Range(1, long.MaxValue)]
     public long ExpectedVersion { get; set; }
 
+    /// <summary>Optional reason shown in stock history, max 400.</summary>
     [StringLength(400)]
     public string? Notes { get; set; }
 }

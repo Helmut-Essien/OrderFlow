@@ -7,16 +7,19 @@ namespace OrderFlow.Domain.Entities;
 /// </summary>
 public class Product
 {
+    /// <summary>ULID primary key.</summary>
     public string Id { get; private set; } = NUlid.Ulid.NewUlid().ToString();
 
     /// <summary>Tenant shop that owns this product.</summary>
     public string ShopId { get; private set; } = string.Empty;
 
+    /// <summary>Display name, max 200 characters.</summary>
     public string Name { get; private set; } = string.Empty;
 
     /// <summary>Uppercase SKU, unique within the shop (max 50).</summary>
     public string Sku { get; private set; } = string.Empty;
 
+    /// <summary>Optional grouping label, max 80 characters.</summary>
     public string? Category { get; private set; }
 
     /// <summary>Unit price in GHS, rounded to 2 decimal places (0–999,999,999.99).</summary>
@@ -25,19 +28,25 @@ public class Product
     /// <summary>On-hand quantity. Mutate only via <see cref="ApplyStock"/> after an atomic SQL update.</summary>
     public int Stock { get; private set; }
 
+    /// <summary>Dashboard flags the SKU when <see cref="Stock"/> is at or below this value.</summary>
     public int LowStockThreshold { get; private set; }
 
+    /// <summary>Inactive SKUs stay in history but do not count toward <c>PlanQuota.MaxProducts</c>.</summary>
     public bool IsActive { get; private set; } = true;
 
     /// <summary>Optimistic concurrency token. Starts at 1; increment on every details or stock change.</summary>
     public long Version { get; private set; } = 1;
 
+    /// <summary>UTC insert time.</summary>
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>UTC last mutation time.</summary>
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>Owning shop navigation. Required by EF; do not use in handlers.</summary>
     public Shop Shop { get; private set; } = null!;
 
+    /// <summary>Audit rows for this SKU. Loaded only when explicitly included.</summary>
     public ICollection<StockMovement> StockMovements { get; private set; } = [];
 
     private Product()

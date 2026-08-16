@@ -7,6 +7,7 @@ namespace OrderFlow.Domain.Entities;
 /// </summary>
 public class User
 {
+    /// <summary>ULID primary key.</summary>
     public string Id { get; private set; } = NUlid.Ulid.NewUlid().ToString();
 
     /// <summary>Tenant shop this user belongs to.</summary>
@@ -15,15 +16,19 @@ public class User
     /// <summary>Lowercase email, unique, max 320 characters.</summary>
     public string Email { get; private set; } = string.Empty;
 
+    /// <summary>Shown in the shell; max 200 characters.</summary>
     public string DisplayName { get; private set; } = string.Empty;
 
     /// <summary>BCrypt hash. Never log or return this value.</summary>
     public string PasswordHash { get; private set; } = string.Empty;
 
+    /// <summary>Owner at signup; Assistant from the settings slice.</summary>
     public UserRole Role { get; private set; } = UserRole.Assistant;
 
+    /// <summary>UTC insert time.</summary>
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>Owning shop navigation. Required by EF; do not use in handlers.</summary>
     public Shop Shop { get; private set; } = null!;
 
     private User()

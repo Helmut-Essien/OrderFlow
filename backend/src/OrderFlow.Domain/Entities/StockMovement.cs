@@ -8,11 +8,13 @@ namespace OrderFlow.Domain.Entities;
 /// </summary>
 public class StockMovement
 {
+    /// <summary>ULID primary key.</summary>
     public string Id { get; private set; } = NUlid.Ulid.NewUlid().ToString();
 
     /// <summary>Tenant shop; must match the product's shop.</summary>
     public string ShopId { get; private set; } = string.Empty;
 
+    /// <summary>Product this movement belongs to.</summary>
     public string ProductId { get; private set; } = string.Empty;
 
     /// <summary>Signed quantity applied (positive inbound, negative outbound).</summary>
@@ -21,14 +23,19 @@ public class StockMovement
     /// <summary>On-hand stock after this movement (0–99,999,999).</summary>
     public int ResultingStock { get; private set; }
 
+    /// <summary>Adjustment in slice 2; Reserve/Deduct/Release in later order slices.</summary>
     public StockMovementType Type { get; private set; } = StockMovementType.Adjustment;
 
+    /// <summary>Optional reason, max 400 characters.</summary>
     public string? Notes { get; private set; }
 
+    /// <summary>JWT user who applied the change, when known.</summary>
     public string? CreatedByUserId { get; private set; }
 
+    /// <summary>UTC insert time. Rows are immutable after create.</summary>
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>Product navigation. Required by EF; do not use in handlers.</summary>
     public Product Product { get; private set; } = null!;
 
     private StockMovement()

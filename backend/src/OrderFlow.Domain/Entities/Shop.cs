@@ -7,12 +7,16 @@ namespace OrderFlow.Domain.Entities;
 /// </summary>
 public class Shop
 {
+    /// <summary>ULID primary key.</summary>
     public string Id { get; private set; } = NUlid.Ulid.NewUlid().ToString();
 
+    /// <summary>Display name, max 200 characters.</summary>
     public string Name { get; private set; } = string.Empty;
 
+    /// <summary>Optional contact phone, max 50 characters.</summary>
     public string? Phone { get; private set; }
 
+    /// <summary>Optional street address, max 400 characters.</summary>
     public string? Address { get; private set; }
 
     /// <summary>64-character lowercase SHA-256 hex of the Platform license key, used for uniqueness lookups.</summary>
@@ -24,18 +28,23 @@ public class Shop
     /// <summary>Platform plan name snapshot (Starter / Growth / Business). Unknown names still store the original string.</summary>
     public string PlanName { get; private set; } = "Starter";
 
+    /// <summary>UTC instant when the Platform plan snapshot expires; null if Platform omitted it.</summary>
     public DateTime? PlanExpiresAt { get; private set; }
 
     /// <summary>True when Platform returned a plan name that does not map to a known quota; UI should warn.</summary>
     public bool PlanUnrecognized { get; private set; }
 
+    /// <summary>WhatsApp number state. MVP stays <see cref="WhatsAppConnectionStatus.Disconnected"/> until that slice.</summary>
     public WhatsAppConnectionStatus WhatsAppConnectionStatus { get; private set; } =
         WhatsAppConnectionStatus.Disconnected;
 
+    /// <summary>UTC insert time.</summary>
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>UTC last profile or plan-snapshot mutation.</summary>
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>Staff accounts for this shop. Loaded only when explicitly included.</summary>
     public ICollection<User> Users { get; private set; } = [];
 
     private Shop()

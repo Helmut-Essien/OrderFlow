@@ -16,6 +16,7 @@ public sealed class UpdateProductCommandHandler(
     IProductRepository products,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateProductCommand, ProductDto>
 {
+    /// <summary>Applies details and bumps <c>Version</c>. Stock is unchanged; use adjust-stock for quantity.</summary>
     public async Task<ProductDto> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))

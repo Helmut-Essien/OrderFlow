@@ -54,6 +54,11 @@ export class ProductListComponent {
     Math.max(1, Math.ceil(this.totalCount() / this.pageSize))
   );
 
+  /** True when search text or a category chip is narrowing the list. */
+  readonly hasFilters = computed(
+    () => this.search().trim().length > 0 || this.category() !== null
+  );
+
   /** True when active products have reached `PlanQuota.MaxProducts`; hide Add Product. */
   readonly atPlanLimit = computed(() => {
     const max = this.shop.plan()?.maxProducts;

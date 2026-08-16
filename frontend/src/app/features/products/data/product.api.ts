@@ -50,6 +50,7 @@ export class ProductApi {
     return this.http.get<ProductDto>(`${this.baseUrl}/${id}`);
   }
 
+  /** Creates a SKU. Opening stock is set here; later qty changes use `adjustStock`. */
   create(request: CreateProductRequest) {
     return this.http.post<ProductDto>(this.baseUrl, request);
   }

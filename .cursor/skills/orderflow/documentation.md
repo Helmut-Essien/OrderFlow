@@ -19,7 +19,7 @@ Apply this on every new or changed public type in the **same slice** as the feat
 - Narrate obvious code (`i++`, `return result`, `inject(HttpClient)`)
 - Leave placeholders (`TODO`, `FIXME`, `HACK`, `add logic here`) or commented-out dead code
 - Write summaries that only echo the identifier (`The Product class represents a product.`)
-- Duplicate XML/JSDoc on private locals, trivial getters, or `CancellationToken` unless behavior is unusual
+- Duplicate XML/JSDoc on private locals or `CancellationToken` unless behavior is unusual. Public properties still need a one-line `///` (CS1591).
 
 ## Backend (C# XML)
 
@@ -27,17 +27,18 @@ Use `///` XML documentation on **public** types and members. Private helpers get
 
 | Kind | Required docs |
 |------|----------------|
-| Domain entity / factory / mutator | Type summary + factory/mutator summaries. Note invariants (max lengths, uniqueness, concurrency `Version`, computed vs stored). |
-| Enum | Type summary; member docs when the name is not the full meaning (e.g. stock `Reserve` vs `Deduct`). |
+| Domain entity / factory / mutator | Type summary **and every public property**. Factory/mutator summaries. Note invariants (max lengths, uniqueness, concurrency `Version`, computed vs stored). |
+| Enum | Type summary **and every member** (including obvious names — CS1591 does not skip them). |
+| `const` / static quota | One-line summary on each public constant or static (e.g. `ProductConstraints.MaxStock`, `PlanQuota.Starter`). |
 | Application command/query | Type summary of the use case. |
-| Handler | Type summary. `Handle`: side effects, tenancy (`ShopId` from JWT), plan limits, exceptions (`ForbiddenAppException`, `ConflictAppException`, `ConcurrencyAppException`). |
-| Validator | Type summary only unless a rule is non-obvious (e.g. max length on login password for DoS). |
-| Shared DTO / request | Type summary. Property docs when DataAnnotations do not already make the contract obvious (optional vs required, units, GHS, version). |
+| Handler | Type summary **and** `Handle`: side effects, tenancy (`ShopId` from JWT), plan limits, exceptions (`ForbiddenAppException`, `ConflictAppException`, `ConcurrencyAppException`). |
+| Validator | Type summary **and** a one-line ctor summary (`Binds field limits from ProductConstraints.`). Extra comments only when a rule is non-obvious (e.g. max length on login password for DoS). |
+| Shared DTO / request | Type summary **and every public property** (units, GHS, version, optional vs required). DataAnnotations do not satisfy CS1591. |
 | Controller action | Summary of the HTTP operation. `<response>` codes that are not the happy path when they matter (409 concurrency, 403 plan cap). |
-| Application interface | Summary of the port; document thread/tenancy expectations if relevant. |
-| Infrastructure adapter | Summary of the external system and failure behavior. Never document secrets. |
-| EF configuration | Type summary; inline comments on CHECK constraints and global query filters. |
-| Test | Method name documents behavior (`CreateProduct_WhenSkuExists_ThrowsConflict`). Comment only a non-obvious arrange/assert. |
+| Application interface | Port summary **and every member**. Document thread/tenancy expectations if relevant. |
+| Infrastructure adapter | Type summary of the external system and failure behavior. Public members that implement an Application port use `/// <inheritdoc />` — do not restate the port. Never document secrets. |
+| EF configuration | Type summary **and** `Configure`. Inline comments on CHECK constraints and global query filters. |
+| Test | **No XML.** Method names document behavior (`CreateProduct_WhenSkuExists_ThrowsConflict`). Comment only a non-obvious arrange/assert. Do not set `GenerateDocumentationFile` on test projects. |
 
 XML tags to use: `<summary>` always; `<param>` / `<returns>` when they add meaning beyond the name; `<exception cref="...">` for AppExceptions callers should expect; `<remarks>` for concurrency SQL, plan mapping, or Platform license rules.
 
@@ -60,7 +61,16 @@ public sealed class CreateProductCommandHandler(...) : IRequestHandler<CreatePro
 }
 ```
 
-Controller XML feeds OpenAPI (`AddOpenApi` in `Program.cs`). Keep action summaries accurate; do not invent undocumented routes. Prefer `GenerateDocumentationFile` on Api, Application, Domain, and Shared so missing public XML docs surface as build warnings.
+Controller XML feeds OpenAPI (`AddOpenApi` in `Program.cs`). Keep action summaries accurate; do not invent undocumented routes.
+
+**CS1591 is a build error** on every `backend/src` project (`Directory.Build.props`: `GenerateDocumentationFile=true` + `WarningsAsErrors` includes `CS1591`). Missing `///` on a public type, property, method, ctor, const, enum member, or **protected override** (`OnModelCreating`) fails the build. One-sentence summaries are enough; do not skip `Handle`, validator ctors, or DTO properties. Overrides of framework members use `/// <inheritdoc />` plus `<remarks>` when OrderFlow-specific behavior matters.
+
+**Do not XML-document:**
+
+- Test projects (`backend/tests/Directory.Build.props` sets `GenerateDocumentationFile=false` and `NoWarn` CS1591)
+- EF migrations and snapshots (`Persistence/Migrations/**/*.cs` — never hand-edit generated files)
+
+Private nested types (JSON payloads, SQL row shapes) do not need XML.
 
 ## Frontend (TypeScript / Angular JSDoc)
 
@@ -68,7 +78,7 @@ Use `/** */` JSDoc on **exported** APIs. Components: document the class when the
 
 | Kind | Required docs |
 |------|----------------|
-| `*.api.ts` service | Class summary (which controller it mirrors). Method summaries for list/get/create/update and any extra query params. |
+| `*.api.ts` service | Class summary (which controller it mirrors). Method summaries for **every** HTTP method (`list`/`get`/`create`/`update`/extras) — do not leave `create` undocumented. |
 | `*.models.ts` | File or type summary. `*_FIELD_LIMITS` must note they mirror Shared DTO `[StringLength]` / Domain constraints. Document helpers (`generateSku`). |
 | Validators / pipes | Export summary + `@param` / `@returns` when the contract is not obvious. |
 | Core services (`AuthService`, `ShopStateService`) | Class summary; document Signals (what they hold, who updates them); document side effects (token storage, logout navigation). |

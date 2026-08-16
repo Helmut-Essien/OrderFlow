@@ -19,6 +19,7 @@ public sealed class AdjustStockCommandHandler(
     IStockMovementRepository stockMovements,
     IUnitOfWork unitOfWork) : IRequestHandler<AdjustStockCommand, ProductDto>
 {
+    /// <summary>Runs the atomic stock UPDATE and inserts an Adjustment movement in the same transaction.</summary>
     public async Task<ProductDto> Handle(AdjustStockCommand request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))

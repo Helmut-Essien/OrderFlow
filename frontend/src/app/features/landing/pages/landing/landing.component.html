@@ -429,21 +429,14 @@
           <span style="--i: 3">launch?</span>
         </h2>
         <p class="of-body-lg mt-3 text-white/80">
-          Reach us on WhatsApp for onboarding help. License keys come from Platform — we never ask for them in chat.
+          Create your shop to get started. WhatsApp support is configured per shop in Settings later — we never ask for license keys in chat.
         </p>
       </div>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row of-reveal" style="--of-reveal-delay: 120ms">
         <a
-          href="https://wa.me/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
-          WhatsApp support
-        </a>
-        <a
           routerLink="/login"
           [queryParams]="{ mode: 'signup' }"
-          class="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-white/40 px-6 py-3 text-base font-semibold tracking-wide text-white hover:bg-white/10 transition-colors">
+          class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
           Create your shop
         </a>
       </div>
@@ -460,9 +453,8 @@
       <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600">
         <a href="#features" class="hover:text-forest min-h-[44px] inline-flex items-center">Features</a>
         <a href="#pricing" class="hover:text-forest min-h-[44px] inline-flex items-center">Pricing</a>
-        <a href="#" class="hover:text-forest min-h-[44px] inline-flex items-center">Privacy</a>
-        <a href="#" class="hover:text-forest min-h-[44px] inline-flex items-center">Terms</a>
-        <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="hover:text-forest min-h-[44px] inline-flex items-center">WhatsApp support</a>
+        <span class="min-h-[44px] inline-flex items-center text-slate-400" title="Legal pages ship in a later slice">Privacy</span>
+        <span class="min-h-[44px] inline-flex items-center text-slate-400" title="Legal pages ship in a later slice">Terms</span>
       </div>
       <p class="text-sm text-slate-500">© {{ year }} OrderFlow</p>
     </div>

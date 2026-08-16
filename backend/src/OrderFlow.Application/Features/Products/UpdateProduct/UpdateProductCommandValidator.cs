@@ -6,6 +6,7 @@ namespace OrderFlow.Application.Features.Products.UpdateProduct;
 /// <summary>Enforces <see cref="ProductConstraints"/> on update. Stock is not part of this command.</summary>
 public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
+    /// <summary>Binds update field limits from <see cref="ProductConstraints"/> (stock is not on this command).</summary>
     public UpdateProductCommandValidator()
     {
         RuleFor(x => x.ProductId).NotEmpty().MaximumLength(26);

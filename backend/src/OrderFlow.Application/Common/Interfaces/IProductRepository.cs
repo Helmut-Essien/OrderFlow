@@ -1,12 +1,14 @@
 using OrderFlow.Domain.Entities;
+using OrderFlow.Shared.DTOs.Dashboard;
+using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Application.Common.Interfaces;
 
 /// <summary>Result of an atomic stock UPDATE (new on-hand quantity and concurrency token).</summary>
 public sealed record StockAdjustmentResult(int Stock, long Version);
 
-/// <summary>Page of products plus the unpaged total for the shop/filter.</summary>
-public sealed record ProductListResult(IReadOnlyList<Product> Items, int TotalCount);
+/// <summary>Page of product DTOs plus the unpaged total for the shop/filter. Items are projected in SQL.</summary>
+public sealed record ProductListResult(IReadOnlyList<ProductDto> Items, int TotalCount);
 
 /// <summary>
 /// Persistence port for shop-scoped products. Implementations must honor EF global <c>ShopId</c> filters.
@@ -22,6 +24,7 @@ public interface IProductRepository
     /// <summary>Untracked lookup by shop and already-normalized (uppercase) SKU.</summary>
     Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default);
 
+    /// <summary>Paged catalog. Projects to <see cref="ProductDto"/> in SQL (no full entity materialize).</summary>
     Task<ProductListResult> ListAsync(
         string shopId,
         string? search,
@@ -36,9 +39,10 @@ public interface IProductRepository
     /// <summary>Distinct non-empty categories for the shop (all products, not just the current page).</summary>
     Task<IReadOnlyList<string>> ListCategoriesAsync(string shopId, CancellationToken cancellationToken = default);
 
-    /// <summary>Active products where stock is at or below the low-stock threshold (capped for dashboard).</summary>
-    Task<IReadOnlyList<Product>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default);
+    /// <summary>Active low-stock rows projected to dashboard DTOs (capped at 50).</summary>
+    Task<IReadOnlyList<LowStockItemDto>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default);
 
+    /// <summary>Stages a new product for insert. Call <see cref="IUnitOfWork.SaveChangesAsync"/> to persist.</summary>
     void Add(Product product);
 
     /// <summary>

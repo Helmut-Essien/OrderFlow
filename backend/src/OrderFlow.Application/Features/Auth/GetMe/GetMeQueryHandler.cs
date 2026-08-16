@@ -13,6 +13,7 @@ public sealed class GetMeQueryHandler(
     IShopRepository shops,
     IUserRepository users) : IRequestHandler<GetMeQuery, MeResponse>
 {
+    /// <summary>Loads the JWT user and shop snapshot. Throws 401 when the user or shop is missing.</summary>
     public async Task<MeResponse> Handle(GetMeQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || currentUser.UserId is null)

@@ -7,7 +7,7 @@ Shop owners are on phones and often slow networks. Prefer fewer round-trips, sma
 ## Backend (API + EF + PostgreSQL)
 
 - **Reads:** `AsNoTracking()` on list/get/dashboard queries. Project to DTOs in the query (`Select`) when the handler does not mutate the entity. Do not materialize full graphs to map two fields.
-- **Writes:** one transaction; no extra `SaveChanges` per line item. Stock reserve/deduct/release stays a **single atomic SQL UPDATE** (version + range). Never read-modify-write stock.
+- **Writes:** one transaction; no extra `SaveChanges` per line item. Stock reserve/deduct/release stays a **single atomic SQL UPDATE** (version + range). Never read-modify-write stock. **Plan caps** (`MaxProducts`, later orders/users) must serialize in the same transaction as the insert (PostgreSQL `pg_advisory_xact_lock` keyed by `ShopId`, then count, then insert). Do not check-then-insert without a lock.
 - **Pagination:** every collection endpoint is paged (`page` / `pageSize` with a max, default 20, cap 100). Never `ToList()` a whole shop catalog or order history.
 - **Indexes:** `(ShopId)` plus the columns you filter/sort (`Sku` unique per shop, `CreatedAt` for order lists, status where queried). Add them in the EF configuration in the **same slice**.
 - **SQL shape:** filter in the database, not in memory. Prefer `EF.Functions.ILike` (or `ILIKE`) for search instead of `ToLower().Contains` on columns (that cannot use indexes). Keep `ShopId` in `WHERE` even with global filters when writing raw SQL.
@@ -31,7 +31,8 @@ Shop owners are on phones and often slow networks. Prefer fewer round-trips, sma
 
 ## Anti-patterns
 
-- Loading all products/orders into memory to count or filter
+- Loading all products/orders into memory to count or filter, or materializing full entities then mapping two DTO fields
+- Check-then-insert for plan caps (two concurrent creates can both pass `COUNT`)
 - Chatty APIs (create + N GETs) when the write response already returns the DTO
 - Client-side “infinite” lists without a server page token/offset
 - `ChangeDetectorRef.detectChanges()` loops, or default CD on a large table

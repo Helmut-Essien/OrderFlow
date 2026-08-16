@@ -2,6 +2,8 @@ using OrderFlow.Application.Common.Interfaces;
 using OrderFlow.Domain;
 using OrderFlow.Domain.Entities;
 using OrderFlow.Shared.DTOs.Auth;
+using OrderFlow.Shared.DTOs.Dashboard;
+using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Application.Tests.Fakes;
 
@@ -16,6 +18,9 @@ internal sealed class FakeShopRepository : IShopRepository
         => Task.FromResult(Items.FirstOrDefault(s => s.LicenseLookupHash == licenseLookupHash));
 
     public void Add(Shop shop) => Items.Add(shop);
+
+    public Task AcquirePlanCapLockAsync(string shopId, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
 }
 
 internal sealed class FakeUserRepository : IUserRepository
@@ -112,7 +117,7 @@ internal sealed class FakeProductRepository : IProductRepository
             query = query.Where(p => p.Category == category.Trim());
 
         var materialized = query.OrderBy(p => p.Name).ThenBy(p => p.Sku).ToList();
-        var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToList();
         return Task.FromResult(new ProductListResult(pageItems, materialized.Count));
     }
 
@@ -130,11 +135,20 @@ internal sealed class FakeProductRepository : IProductRepository
                 .OrderBy(c => c, StringComparer.Ordinal)
                 .ToList());
 
-    public Task<IReadOnlyList<Product>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default)
-        => Task.FromResult<IReadOnlyList<Product>>(
+    public Task<IReadOnlyList<LowStockItemDto>> GetLowStockAsync(string shopId, CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<LowStockItemDto>>(
             Items.Where(p => p.ShopId == shopId && p.IsActive && p.IsLowStock)
                 .OrderBy(p => p.Stock)
                 .ThenBy(p => p.Name)
+                .Take(50)
+                .Select(p => new LowStockItemDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Sku = p.Sku,
+                    Stock = p.Stock,
+                    LowStockThreshold = p.LowStockThreshold
+                })
                 .ToList());
 
     public void Add(Product product) => Items.Add(product);
@@ -157,6 +171,23 @@ internal sealed class FakeProductRepository : IProductRepository
         item.ApplyStock(newStock, item.Version + 1);
         return Task.FromResult<StockAdjustmentResult?>(new StockAdjustmentResult(item.Stock, item.Version));
     }
+
+    private static ProductDto ToDto(Product product) => new()
+    {
+        Id = product.Id,
+        ShopId = product.ShopId,
+        Name = product.Name,
+        Sku = product.Sku,
+        Category = product.Category,
+        Price = product.Price,
+        Stock = product.Stock,
+        LowStockThreshold = product.LowStockThreshold,
+        IsActive = product.IsActive,
+        IsLowStock = product.IsLowStock,
+        Version = product.Version,
+        CreatedAt = product.CreatedAt,
+        UpdatedAt = product.UpdatedAt
+    };
 }
 
 internal sealed class FakeStockMovementRepository : IStockMovementRepository

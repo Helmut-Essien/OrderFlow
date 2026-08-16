@@ -7,6 +7,7 @@ namespace OrderFlow.Infrastructure.Persistence.Configurations;
 /// <summary>User table. Email is globally unique; role is a CHECK-constrained string.</summary>
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
+    /// <summary>Applies global unique email and role CHECK.</summary>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users", table =>

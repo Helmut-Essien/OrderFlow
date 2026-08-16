@@ -9,6 +9,7 @@ namespace OrderFlow.Infrastructure.Persistence.Configurations;
 /// </summary>
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
+    /// <summary>Applies max lengths, CHECKs, unique SKU per shop, and concurrency token.</summary>
     public void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products", table =>

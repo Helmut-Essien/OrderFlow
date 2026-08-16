@@ -6,6 +6,7 @@ namespace OrderFlow.Application.Features.Products.CreateProduct;
 /// <summary>Enforces <see cref="ProductConstraints"/> on create. FluentValidation is the authoritative API 400 source.</summary>
 public sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
+    /// <summary>Binds create field limits from <see cref="ProductConstraints"/>.</summary>
     public CreateProductCommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(ProductConstraints.NameMaxLength);

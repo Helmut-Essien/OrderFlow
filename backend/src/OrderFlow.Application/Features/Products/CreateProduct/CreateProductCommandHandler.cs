@@ -23,51 +23,61 @@ public sealed class CreateProductCommandHandler(
 {
     /// <summary>
     /// Persists the product and an opening <see cref="StockMovement"/> when initial stock is non-zero.
+    /// Plan cap and insert share one transaction so concurrent creates cannot exceed <c>MaxProducts</c>.
     /// </summary>
     public async Task<ProductDto> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         var shopId = RequireShopId(currentUser);
-        var shop = await shops.GetByIdAsync(shopId, cancellationToken)
-            ?? throw new NotFoundAppException("Shop not found.");
+        ProductDto? dto = null;
 
-        // Plan caps live here (not Domain) so quota can change with Platform planName.
-        var quota = PlanQuota.FromPlanName(shop.PlanName);
-        if (quota.MaxProducts is int maxProducts)
+        await unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
-            var count = await products.CountByShopAsync(shopId, cancellationToken);
-            if (count >= maxProducts)
-                throw new ForbiddenAppException($"Your {quota.Name} plan allows up to {maxProducts} products.");
-        }
+            await shops.AcquirePlanCapLockAsync(shopId, ct);
 
-        var sku = Product.NormalizeSku(request.Sku);
-        if (await products.GetBySkuAsync(shopId, sku, cancellationToken) is not null)
-            throw new ConflictAppException("A product with this SKU already exists.");
+            var shop = await shops.GetByIdAsync(shopId, ct)
+                ?? throw new NotFoundAppException("Shop not found.");
 
-        var product = Product.Create(
-            shopId,
-            request.Name,
-            sku,
-            request.Category,
-            request.Price,
-            request.Stock,
-            request.LowStockThreshold);
+            // Plan caps live here (not Domain) so quota can change with Platform planName.
+            var quota = PlanQuota.FromPlanName(shop.PlanName);
+            if (quota.MaxProducts is int maxProducts)
+            {
+                var count = await products.CountByShopAsync(shopId, ct);
+                if (count >= maxProducts)
+                    throw new ForbiddenAppException($"Your {quota.Name} plan allows up to {maxProducts} products.");
+            }
 
-        products.Add(product);
+            var sku = Product.NormalizeSku(request.Sku);
+            if (await products.GetBySkuAsync(shopId, sku, ct) is not null)
+                throw new ConflictAppException("A product with this SKU already exists.");
 
-        if (product.Stock != 0)
-        {
-            stockMovements.Add(StockMovement.Create(
+            var product = Product.Create(
                 shopId,
-                product.Id,
-                product.Stock,
-                product.Stock,
-                StockMovementType.Adjustment,
-                "Opening stock",
-                currentUser.UserId));
-        }
+                request.Name,
+                sku,
+                request.Category,
+                request.Price,
+                request.Stock,
+                request.LowStockThreshold);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return ProductMapping.ToDto(product);
+            products.Add(product);
+
+            if (product.Stock != 0)
+            {
+                stockMovements.Add(StockMovement.Create(
+                    shopId,
+                    product.Id,
+                    product.Stock,
+                    product.Stock,
+                    StockMovementType.Adjustment,
+                    "Opening stock",
+                    currentUser.UserId));
+            }
+
+            await unitOfWork.SaveChangesAsync(ct);
+            dto = ProductMapping.ToDto(product);
+        }, cancellationToken);
+
+        return dto!;
     }
 
     private static string RequireShopId(ICurrentUser currentUser)
