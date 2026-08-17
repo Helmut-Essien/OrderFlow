@@ -35,7 +35,7 @@ export function apiErrorMessage(
     }
 
     if (body.code === 'concurrency') {
-      return body.message ?? 'This product was updated by someone else. Refresh and try again.';
+      return body.message ?? 'This was updated by someone else. Refresh and try again.';
     }
 
     if (body.message?.trim()) {

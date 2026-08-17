@@ -18,7 +18,7 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
         catch (DbUpdateConcurrencyException)
         {
             throw new ConcurrencyAppException(
-                "This product was updated by someone else. Refresh and try again.");
+                "This record was updated by someone else. Refresh and try again.");
         }
     }
 

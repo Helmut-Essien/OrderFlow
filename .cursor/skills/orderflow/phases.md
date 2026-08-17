@@ -8,7 +8,7 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 | 1 | Auth + license: JWT, `/login` Auth Gateway, `/app` shell (`core/` + `features/auth|dashboard`) | **Done** |
 | 2 | Products + inventory + dashboard numbers (today’s sales, order count, low stock) | **Done** |
 | — | Landing marketing SEO: prerender `/`, meta/OG/JSON-LD, robots, sitemap | **Done** |
-| 3 | Manual orders + status workflow + stock reserve/deduct | Planned |
+| 3 | Manual orders + status workflow + stock reserve/deduct | **Done** |
 | 4 | WhatsApp webhook, one number per shop, catalog/list messages, strict free-text match | Planned |
 | 5 | Paystack payment links + payment webhook → Paid | Planned |
 | 6 | Settings, assistant users, low-stock alerts, PWA cache of products/recent orders | Planned |
@@ -21,6 +21,16 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 - Dashboard cards: today’s sales / order count / pending WhatsApp are 0 until slice 3; low-stock list is live (SQL-projected DTOs)
 - Angular product feature: `features/products/{data,pages,routes}` under `/app/products`; shell nav Inventory; Signals for list/form state; DTO models mirror `Shared/DTOs`; inventory empty catalog ≠ no search matches
 - **Full-stack constraints** for Product fields: Domain + EF CHECKs/MaxLength + FluentValidation + Shared DTO annotations + Angular `PRODUCT_FIELD_LIMITS` / validators / `maxlength`
+
+## Slice 3 acceptance
+
+- Manual `POST /api/orders` (source `Manual`). Optional `confirmImmediately` reserves stock in the same transaction
+- Status: Pending → Confirmed → Paid → Fulfilled; Cancelled from Pending/Confirmed/Paid. Fulfilled and Cancelled are terminal. Pending cannot skip to Paid
+- Stock: reserve on Confirmed (atomic `Stock -= qty`); Paid writes a Deduct **audit** only (on-hand already fell at Confirm); release on Cancelled from Confirmed or Paid. Pending does not touch stock
+- `PlanQuota.MaxOrdersPerMonth` counts all orders created in the current UTC month (cancelled still consume a slot); lock + count + insert in one transaction
+- Dashboard: `todaysSales` / `orderCount` from `PaidAt` on today’s UTC date for orders still Paid or Fulfilled (cancelled excluded); `recentOrders` capped at 10; `pendingWhatsAppCount` counts WhatsApp+Pending (0 until slice 4)
+- Angular orders UI: `features/orders/{data,pages,routes}` under `/app/orders`; shell nav Orders + gold New Order (sidebar only); list empty ≠ no matches; `ORDER_FIELD_LIMITS` matches Domain + Shared DTOs
+- **Full-stack constraints** for Order fields: Domain + EF CHECKs/MaxLength + FluentValidation + Shared DTO annotations + Angular `ORDER_FIELD_LIMITS` / validators / `maxlength`
 
 ## Slice 3 notes (stock)
 

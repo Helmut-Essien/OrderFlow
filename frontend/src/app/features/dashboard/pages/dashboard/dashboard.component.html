@@ -80,8 +80,43 @@
     </section>
 
     <section class="rounded-xl border border-[#E5E0D5] bg-white p-5 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
-      <h2 class="text-lg font-semibold text-ink">Recent orders</h2>
-      <p class="mt-4 text-sm text-stone-500">Orders will appear here when you start taking them.</p>
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-ink">Recent orders</h2>
+        <a routerLink="/app/orders" class="text-sm font-semibold text-forest hover:text-forest-dark">Orders</a>
+      </div>
+      @if (loading() && !data()) {
+        <p class="mt-4 text-sm text-stone-500">Loading…</p>
+      } @else if ((data()?.recentOrders?.length ?? 0) === 0) {
+        <p class="mt-4 text-sm text-stone-500">No orders yet. Create a manual order to start the workflow.</p>
+        <a
+          routerLink="/app/orders/new"
+          class="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark">
+          New Order
+        </a>
+      } @else {
+        <ul class="mt-3 divide-y divide-[#E5E0D5]">
+          @for (order of data()?.recentOrders ?? []; track order.id) {
+            <li>
+              <a
+                [routerLink]="['/app/orders', order.id]"
+                class="flex min-h-[44px] items-center justify-between gap-3 py-3">
+                <div class="min-w-0">
+                  <p class="truncate font-semibold text-ink">{{ order.customerName }}</p>
+                  <p class="text-xs text-stone-500">
+                    {{ order.totalAmount | ghsCurrency }} · {{ order.createdAt | date: 'd MMM y' }}
+                  </p>
+                </div>
+                <div class="flex shrink-0 items-center gap-2">
+                  <span class="rounded-full px-2 py-0.5 text-xs font-semibold" [ngClass]="chipClass(order.status)">
+                    {{ order.status }}
+                  </span>
+                  <span class="text-stone-400" aria-hidden="true">›</span>
+                </div>
+              </a>
+            </li>
+          }
+        </ul>
+      }
     </section>
   </div>
 </div>

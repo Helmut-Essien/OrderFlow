@@ -129,6 +129,57 @@ Create or update one SKU for WhatsApp selling.
 
 ---
 
+## 6. Orders
+
+**Route (Slice 3):** `/app/orders` → `features/orders/`
+
+### Purpose
+Browse/search orders; jump to create or open a status workflow.
+
+### Structure
+- Title + gold **New Order** (`w-full` until `sm`). Do **not** hide New Order from list `totalCount` — that is not the monthly cap. Show `maxOrdersPerMonth` as advisory copy; 403 on create is the hard stop.
+- Search (customer name/phone) + status chips (All / Pending / Confirmed / Paid / Fulfilled / Cancelled). Horizontal scroll on phone; wrap `md+`
+- Cards until `lg`; table from `lg`
+- Columns: Customer, Status (pills), Total GHS, Lines, Created, Open
+- Pagination footer
+- Empty shop vs no search/status matches (different copy; New Order on a true empty list)
+- `data/`: models mirroring `OrderDto` / `OrderListDto` + `ORDER_FIELD_LIMITS` + `order.api.ts`
+
+---
+
+## 7. New Order
+
+**Route (Slice 3):** `/app/orders/new`
+
+### Purpose
+Create a manual order. Catalog prices are snapshotted; the shop does not type unit price.
+
+### Structure
+- Back to Orders (`/app/orders`)
+- Customer name*, phone?, notes?
+- **Reserve stock now** checkbox default **on** (`confirmImmediately`) — Confirmed + reserve in the same POST. Unchecked stays Pending and does not touch stock
+- Product picker: paged `ProductApi.list` search (never load the full catalog). Active SKUs only; one product id per order; max 50 lines; qty 1–99,999,999. Show on-hand on each draft line; block reserve-now save when qty exceeds that snapshot
+- First catalog fetch must not flash “no match” (searching until the first page returns)
+- Cancel | Save order (forest). Trim/omit blank optionals. Success → order detail
+- Empty catalog: send the shop to Add Product, not a fake picker
+
+---
+
+## 8. Order detail
+
+**Route (Slice 3):** `/app/orders/:id`
+
+### Purpose
+Read line snapshots and move status along the lifecycle.
+
+### Structure
+- Back to Orders; customer name as title; status pill (do **not** show `version`)
+- Actions from allowed transitions only: Confirm / Mark paid / Mark fulfilled (forest) and Cancel (outline danger). Cancel needs a second confirm; Confirmed/Paid copy says stock returns. Fulfilled and Cancelled are terminal; Pending cannot jump to Paid
+- 409 concurrency: show the API message, reload the order, shop retries
+- Line cards until `lg`; table from `lg`. Total GHS. Confirmed/Paid/Fulfilled/Cancelled timestamps when present
+
+---
+
 ## Illustration & flair checklist (brand surfaces)
 
 - [ ] 2–3 motion elements max; reduced-motion fallback

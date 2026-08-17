@@ -3,6 +3,7 @@ using OrderFlow.Domain;
 using OrderFlow.Domain.Entities;
 using OrderFlow.Shared.DTOs.Auth;
 using OrderFlow.Shared.DTOs.Dashboard;
+using OrderFlow.Shared.DTOs.Orders;
 using OrderFlow.Shared.DTOs.Products;
 
 namespace OrderFlow.Application.Tests.Fakes;
@@ -97,6 +98,11 @@ internal sealed class FakeProductRepository : IProductRepository
 
     public Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default)
         => Task.FromResult(Items.FirstOrDefault(p => p.ShopId == shopId && p.Sku == sku));
+
+    public Task<IReadOnlyList<Product>> GetByIdsAsync(
+        IReadOnlyCollection<string> ids,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<Product>>(Items.Where(p => ids.Contains(p.Id)).ToList());
 
     public Task<ProductListResult> ListAsync(
         string shopId,
@@ -195,6 +201,108 @@ internal sealed class FakeStockMovementRepository : IStockMovementRepository
     public List<StockMovement> Items { get; } = [];
 
     public void Add(StockMovement movement) => Items.Add(movement);
+}
+
+internal sealed class FakeOrderRepository : IOrderRepository
+{
+    public List<Order> Items { get; } = [];
+
+    public Task<Order?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        => Task.FromResult(Items.FirstOrDefault(o => o.Id == id));
+
+    public Task<Order?> GetTrackedByIdAsync(string id, CancellationToken cancellationToken = default)
+        => GetByIdAsync(id, cancellationToken);
+
+    public Task<OrderListResult> ListAsync(
+        string shopId,
+        string? search,
+        string? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        IEnumerable<Order> query = Items.Where(o => o.ShopId == shopId);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(o =>
+                o.CustomerName.ToLowerInvariant().Contains(term)
+                || (o.CustomerPhone != null && o.CustomerPhone.ToLowerInvariant().Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse<OrderFlow.Domain.Enums.OrderStatus>(status, ignoreCase: true, out var parsed)
+            && Enum.GetNames<OrderFlow.Domain.Enums.OrderStatus>().Any(n => n.Equals(status, StringComparison.OrdinalIgnoreCase)))
+        {
+            query = query.Where(o => o.Status == parsed);
+        }
+
+        var materialized = query.OrderByDescending(o => o.CreatedAt).ThenByDescending(o => o.Id).ToList();
+        var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize).Select(ToListDto).ToList();
+        return Task.FromResult(new OrderListResult(pageItems, materialized.Count));
+    }
+
+    public Task<int> CountCreatedInRangeAsync(
+        string shopId,
+        DateTime monthStartUtc,
+        DateTime monthEndUtc,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(Items.Count(o =>
+            o.ShopId == shopId && o.CreatedAt >= monthStartUtc && o.CreatedAt < monthEndUtc));
+
+    public Task<OrderDashboardStats> GetDashboardStatsAsync(
+        string shopId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var shopOrders = Items.Where(o => o.ShopId == shopId).ToList();
+        var paidToday = shopOrders.Where(o =>
+            o.PaidAt >= dayStartUtc
+            && o.PaidAt < dayEndUtc
+            && Order.CountsTowardTodaysSales(o.Status)).ToList();
+        var pendingWhatsApp = shopOrders.Count(o =>
+            o.Source == OrderFlow.Domain.Enums.OrderSource.WhatsApp
+            && o.Status == OrderFlow.Domain.Enums.OrderStatus.Pending);
+        var recent = shopOrders
+            .OrderByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.Id)
+            .Take(10)
+            .Select(o => new DashboardOrderDto
+            {
+                Id = o.Id,
+                CustomerName = o.CustomerName,
+                Status = o.Status.ToString(),
+                Source = o.Source.ToString(),
+                TotalAmount = o.TotalAmount,
+                CreatedAt = o.CreatedAt
+            })
+            .ToList();
+
+        return Task.FromResult(new OrderDashboardStats(
+            paidToday.Sum(o => o.TotalAmount),
+            paidToday.Count,
+            pendingWhatsApp,
+            recent));
+    }
+
+    public void Add(Order order) => Items.Add(order);
+
+    private static OrderListDto ToListDto(Order order) => new()
+    {
+        Id = order.Id,
+        ShopId = order.ShopId,
+        CustomerName = order.CustomerName,
+        CustomerPhone = order.CustomerPhone,
+        Status = order.Status.ToString(),
+        Source = order.Source.ToString(),
+        NeedsClarification = order.NeedsClarification,
+        TotalAmount = order.TotalAmount,
+        LineCount = order.Lines.Count,
+        Version = order.Version,
+        CreatedAt = order.CreatedAt,
+        UpdatedAt = order.UpdatedAt
+    };
 }
 
 internal sealed class FakeCurrentUser : ICurrentUser

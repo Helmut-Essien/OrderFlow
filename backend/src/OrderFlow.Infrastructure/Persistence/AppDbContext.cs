@@ -5,7 +5,7 @@ using OrderFlow.Domain.Entities;
 namespace OrderFlow.Infrastructure.Persistence;
 
 /// <summary>
-/// PostgreSQL context. Global query filters scope Shop/User/Product/StockMovement to the JWT <c>shopId</c> when present.
+/// PostgreSQL context. Global query filters scope Shop/User/Product/StockMovement/Order/OrderLine to the JWT <c>shopId</c> when present.
 /// </summary>
 public class AppDbContext(
     DbContextOptions<AppDbContext> options,
@@ -22,6 +22,12 @@ public class AppDbContext(
 
     /// <summary>Immutable stock audit rows.</summary>
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
+    /// <summary>Shop orders. Status mutations are tracked; list/dashboard reads are untracked projections.</summary>
+    public DbSet<Order> Orders => Set<Order>();
+
+    /// <summary>Order line snapshots. Filtered by shop independently of the parent include.</summary>
+    public DbSet<OrderLine> OrderLines => Set<OrderLine>();
 
     /// <inheritdoc />
     /// <remarks>
@@ -43,5 +49,11 @@ public class AppDbContext(
 
         modelBuilder.Entity<StockMovement>()
             .HasQueryFilter(m => currentUser.ShopId == null || m.ShopId == currentUser.ShopId);
+
+        modelBuilder.Entity<Order>()
+            .HasQueryFilter(o => currentUser.ShopId == null || o.ShopId == currentUser.ShopId);
+
+        modelBuilder.Entity<OrderLine>()
+            .HasQueryFilter(l => currentUser.ShopId == null || l.ShopId == currentUser.ShopId);
     }
 }

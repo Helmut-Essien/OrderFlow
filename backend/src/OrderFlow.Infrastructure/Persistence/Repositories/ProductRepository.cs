@@ -35,6 +35,19 @@ public sealed class ProductRepository(AppDbContext db) : IProductRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Product>> GetByIdsAsync(
+        IReadOnlyCollection<string> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+            return [];
+
+        return await db.Products.AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<ProductListResult> ListAsync(
         string shopId,
         string? search,

@@ -4,7 +4,7 @@ using OrderFlow.Domain.Enums;
 namespace OrderFlow.Domain.Entities;
 
 /// <summary>
-/// Immutable audit row for a stock change. Slice 2 writes <see cref="StockMovementType.Adjustment"/> only.
+/// Immutable audit row for a stock change. Adjustment is manual; Reserve/Deduct/Release come from order status changes.
 /// </summary>
 public class StockMovement
 {
@@ -23,7 +23,7 @@ public class StockMovement
     /// <summary>On-hand stock after this movement (0–99,999,999).</summary>
     public int ResultingStock { get; private set; }
 
-    /// <summary>Adjustment in slice 2; Reserve/Deduct/Release in later order slices.</summary>
+    /// <summary>Adjustment for manual stock; Reserve/Deduct/Release for order status changes.</summary>
     public StockMovementType Type { get; private set; } = StockMovementType.Adjustment;
 
     /// <summary>Optional reason, max 400 characters.</summary>

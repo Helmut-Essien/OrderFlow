@@ -1,0 +1,157 @@
+<div>
+  <a
+    routerLink="/app/orders"
+    class="inline-flex min-h-[44px] items-center text-sm font-semibold text-forest hover:text-forest-dark">
+    ← Back to Orders
+  </a>
+
+  @if (error()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      {{ error() }}
+    </div>
+  }
+
+  @if (order(); as current) {
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <h1 class="of-headline-lg truncate text-ink">{{ current.customerName }}</h1>
+        @if (current.customerPhone) {
+          <p class="mt-1 text-stone-600">{{ current.customerPhone }}</p>
+        }
+        <p class="mt-1 text-sm text-stone-500">
+          {{ current.source }} · {{ current.createdAt | date: 'd MMM y, HH:mm' }}
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="rounded-full px-3 py-1 text-sm font-semibold" [ngClass]="chipClass(current.status)">
+          {{ current.status }}
+        </span>
+        @if (current.needsClarification) {
+          <span class="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-900">Needs reply</span>
+        }
+      </div>
+    </div>
+
+    @if (current.notes) {
+      <p class="mt-4 rounded-lg border border-[#E5E0D5] bg-white px-4 py-3 text-sm text-stone-600">
+        {{ current.notes }}
+      </p>
+    }
+
+    @if (actions().length > 0) {
+      @if (confirmingCancel()) {
+        <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-4" role="alertdialog" aria-labelledby="cancel-order-title">
+          <p id="cancel-order-title" class="font-semibold text-red-900">Cancel this order?</p>
+          <p class="mt-1 text-sm text-red-800">{{ cancelWarning() }}</p>
+          <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-forest px-5 py-2.5 text-sm font-semibold text-forest hover:bg-paper sm:w-auto"
+              [disabled]="submitting()"
+              (click)="dismissCancel()">
+              Keep order
+            </button>
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-red-700 px-5 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 sm:w-auto"
+              [disabled]="submitting()"
+              (click)="confirmCancel()">
+              {{ submitting() ? 'Please wait…' : 'Cancel order' }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          @for (action of forwardActions(); track action.status) {
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold text-white hover:bg-forest-dark disabled:opacity-60 sm:w-auto"
+              [disabled]="submitting()"
+              (click)="changeStatus(action)">
+              {{ submitting() ? 'Please wait…' : action.label }}
+            </button>
+          }
+          @if (cancelAction()) {
+            <button
+              type="button"
+              class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-red-700 px-5 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 sm:w-auto"
+              [disabled]="submitting()"
+              (click)="requestCancel()">
+              Cancel
+            </button>
+          }
+        </div>
+      }
+    }
+
+    <!-- Phone / tablet line cards. Table from lg. -->
+    <ul class="mt-6 space-y-3 lg:hidden">
+      @for (line of current.lines; track line.id) {
+        <li class="rounded-xl border border-[#E5E0D5] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+          <p class="font-semibold text-ink">{{ line.productName }}</p>
+          <p class="mt-0.5 font-mono text-xs text-stone-500">{{ line.sku }}</p>
+          <p class="mt-2 text-sm text-stone-600">
+            {{ line.quantity }} × {{ line.unitPrice | ghsCurrency }}
+          </p>
+          <p class="mt-1 text-sm font-semibold text-ink">{{ line.lineTotal | ghsCurrency }}</p>
+        </li>
+      }
+    </ul>
+
+    <div class="mt-6 hidden overflow-hidden rounded-xl border border-[#E5E0D5] bg-white shadow-[0_2px_8px_rgba(15,107,76,0.08)] lg:block">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-[#E5E0D5] bg-paper/60 text-xs font-semibold uppercase tracking-wider text-stone-500">
+          <tr>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3">SKU</th>
+            <th class="px-4 py-3">Qty</th>
+            <th class="px-4 py-3">Unit price</th>
+            <th class="px-4 py-3">Line total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of current.lines; track line.id) {
+            <tr class="border-b border-[#E5E0D5] last:border-0">
+              <td class="px-4 py-3 font-semibold text-ink">{{ line.productName }}</td>
+              <td class="px-4 py-3 font-mono text-stone-600">{{ line.sku }}</td>
+              <td class="px-4 py-3">{{ line.quantity }}</td>
+              <td class="px-4 py-3">{{ line.unitPrice | ghsCurrency }}</td>
+              <td class="px-4 py-3 font-semibold">{{ line.lineTotal | ghsCurrency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-4 text-right text-lg font-bold text-ink">Total {{ current.totalAmount | ghsCurrency }}</p>
+
+    <dl class="mt-6 grid gap-2 text-sm text-stone-500 sm:grid-cols-2">
+      @if (current.confirmedAt) {
+        <div>
+          <dt class="font-semibold text-stone-600">Confirmed</dt>
+          <dd>{{ current.confirmedAt | date: 'd MMM y, HH:mm' }}</dd>
+        </div>
+      }
+      @if (current.paidAt) {
+        <div>
+          <dt class="font-semibold text-stone-600">Paid</dt>
+          <dd>{{ current.paidAt | date: 'd MMM y, HH:mm' }}</dd>
+        </div>
+      }
+      @if (current.fulfilledAt) {
+        <div>
+          <dt class="font-semibold text-stone-600">Fulfilled</dt>
+          <dd>{{ current.fulfilledAt | date: 'd MMM y, HH:mm' }}</dd>
+        </div>
+      }
+      @if (current.cancelledAt) {
+        <div>
+          <dt class="font-semibold text-stone-600">Cancelled</dt>
+          <dd>{{ current.cancelledAt | date: 'd MMM y, HH:mm' }}</dd>
+        </div>
+      }
+    </dl>
+  } @else if (loading()) {
+    <p class="mt-8 text-sm text-stone-500">Loading order…</p>
+  }
+</div>

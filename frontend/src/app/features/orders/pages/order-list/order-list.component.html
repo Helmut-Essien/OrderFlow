@@ -1,0 +1,179 @@
+<div>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="of-headline-lg text-ink">Orders</h1>
+      <p class="mt-1 text-stone-600">
+        Manual and WhatsApp orders for this shop.
+        @if (shop.plan()?.maxOrdersPerMonth != null) {
+          <span class="text-stone-500">
+            {{ shop.plan()?.name }} allows {{ shop.plan()?.maxOrdersPerMonth }} orders this month.
+          </span>
+        }
+      </p>
+    </div>
+    <a
+      routerLink="/app/orders/new"
+      class="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark sm:w-auto">
+      New Order
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      {{ error() }}
+    </div>
+  }
+
+  <div class="mt-6 flex flex-col gap-3">
+    <label class="block max-w-xl">
+      <span class="sr-only">Search orders</span>
+      <input
+        type="search"
+        [class]="fieldClass"
+        placeholder="Search customer name or phone"
+        [attr.maxlength]="limits.search"
+        (input)="onSearch($event)" />
+    </label>
+
+    <div class="-mx-4 overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0" role="group" aria-label="Filter by status">
+      <div class="flex w-max gap-2 md:w-auto md:flex-wrap">
+        @for (chip of statusFilters; track chip ?? 'all') {
+          <button
+            type="button"
+            class="min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold"
+            [class.bg-forest]="status() === chip"
+            [class.text-white]="status() === chip"
+            [class.bg-white]="status() !== chip"
+            [class.text-stone-600]="status() !== chip"
+            [class.border]="status() !== chip"
+            [class.border-[#E5E0D5]]="status() !== chip"
+            (click)="selectStatus(chip)">
+            {{ statusFilterLabel(chip) }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (loading() && items().length === 0) {
+    <p class="mt-8 text-sm text-stone-500">Loading orders…</p>
+  } @else if (items().length === 0 && hasFilters()) {
+    <div class="mt-8 rounded-xl border border-[#E5E0D5] bg-white px-6 py-10 text-center shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-ink font-semibold">No matching orders</p>
+      <p class="mt-1 text-sm text-stone-500">Try a different name, phone, or status.</p>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="mt-8 rounded-xl border border-[#E5E0D5] bg-white px-6 py-10 text-center shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+      <p class="text-ink font-semibold">No orders yet</p>
+      <p class="mt-1 text-sm text-stone-500">Create a manual order to start the workflow.</p>
+      <a
+        routerLink="/app/orders/new"
+        class="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-gold-dark">
+        New Order
+      </a>
+    </div>
+  } @else {
+    <!-- Phone / tablet cards. Table from lg, matching the desktop sidebar. -->
+    <ul class="mt-6 space-y-3 lg:hidden">
+      @for (order of items(); track order.id) {
+        <li>
+          <a
+            [routerLink]="['/app/orders', order.id]"
+            class="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border border-[#E5E0D5] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(15,107,76,0.08)]">
+            <div class="min-w-0">
+              <p class="font-semibold text-ink truncate">{{ order.customerName }}</p>
+              @if (order.customerPhone) {
+                <p class="mt-0.5 truncate text-xs text-stone-500">{{ order.customerPhone }}</p>
+              }
+              <p class="mt-1 text-sm text-stone-600">{{ order.totalAmount | ghsCurrency }}</p>
+              <p class="mt-0.5 text-xs text-stone-500">
+                {{ order.lineCount }} {{ order.lineCount === 1 ? 'line' : 'lines' }}
+                · {{ order.createdAt | date: 'd MMM y, HH:mm' }}
+              </p>
+            </div>
+            <div class="flex shrink-0 flex-col items-end gap-1">
+              <span class="rounded-full px-2 py-0.5 text-xs font-semibold" [ngClass]="chipClass(order.status)">
+                {{ order.status }}
+              </span>
+              @if (order.source === 'WhatsApp') {
+                <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600">WhatsApp</span>
+              }
+              @if (order.needsClarification) {
+                <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">Needs reply</span>
+              }
+              <span class="text-stone-400" aria-hidden="true">›</span>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <!-- Desktop table -->
+    <div class="mt-6 hidden overflow-hidden rounded-xl border border-[#E5E0D5] bg-white shadow-[0_2px_8px_rgba(15,107,76,0.08)] lg:block">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-[#E5E0D5] bg-paper/60 text-xs font-semibold uppercase tracking-wider text-stone-500">
+          <tr>
+            <th class="px-4 py-3">Customer</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Total</th>
+            <th class="px-4 py-3">Lines</th>
+            <th class="px-4 py-3">Created</th>
+            <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of items(); track order.id) {
+            <tr class="border-b border-[#E5E0D5] last:border-0">
+              <td class="px-4 py-3">
+                <p class="font-semibold text-ink">{{ order.customerName }}</p>
+                @if (order.customerPhone) {
+                  <p class="text-xs text-stone-500">{{ order.customerPhone }}</p>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold" [ngClass]="chipClass(order.status)">
+                  {{ order.status }}
+                </span>
+                @if (order.needsClarification) {
+                  <span class="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">Needs reply</span>
+                }
+              </td>
+              <td class="px-4 py-3">{{ order.totalAmount | ghsCurrency }}</td>
+              <td class="px-4 py-3 text-stone-600">{{ order.lineCount }}</td>
+              <td class="px-4 py-3 text-stone-600">{{ order.createdAt | date: 'd MMM y, HH:mm' }}</td>
+              <td class="px-4 py-3 text-right">
+                <a
+                  [routerLink]="['/app/orders', order.id]"
+                  class="inline-flex min-h-[44px] items-center font-semibold text-forest hover:text-forest-dark">
+                  Open
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-stone-500">
+        Showing {{ rangeStart() }} to {{ rangeEnd() }} of {{ totalCount() }}
+      </p>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="min-h-[44px] rounded-lg border border-[#E5E0D5] bg-white px-4 text-sm font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+          [disabled]="page() <= 1 || loading()"
+          (click)="previousPage()">
+          Previous
+        </button>
+        <button
+          type="button"
+          class="min-h-[44px] rounded-lg border border-[#E5E0D5] bg-white px-4 text-sm font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+          [disabled]="page() >= totalPages() || loading()"
+          (click)="nextPage()">
+          Next
+        </button>
+      </div>
+    </div>
+  }
+</div>

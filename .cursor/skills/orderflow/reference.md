@@ -52,6 +52,10 @@ JSON camelCase. Auth rate limit policy `auth`: 20 req/min **per client IP** (not
 | PUT | `/api/products/{id}` | JWT | `UpdateProductCommand` (`ExpectedVersion`; does not change stock) |
 | POST | `/api/products/{id}/stock` | JWT | `AdjustStockCommand` (`QuantityDelta`, `ExpectedVersion`, `Notes?`) |
 | GET | `/api/dashboard` | JWT | `GetDashboardQuery` |
+| GET | `/api/orders` | JWT | `ListOrdersQuery` (`search`, `status`, `page`, `pageSize` 1–100, default 20) |
+| GET | `/api/orders/{id}` | JWT | `GetOrderQuery` |
+| POST | `/api/orders` | JWT | `CreateOrderCommand` (`confirmImmediately` reserves in the same transaction) |
+| POST | `/api/orders/{id}/status` | JWT | `ChangeOrderStatusCommand` (`Status`, `ExpectedVersion`) |
 | GET | `/health` | Anonymous | ASP.NET health checks (process up) |
 
 Sign-up body: `licenseKey`, `email`, `password`, `shopName`, `displayName?`, `phone?`.  
@@ -62,7 +66,11 @@ Product create: `name`, `sku` (stored uppercase), `category?`, `price`, `stock`,
 Product update: same except no `stock`; plus `isActive`, `expectedVersion`.  
 SKU unique per shop. Create is blocked at `PlanQuota.MaxProducts` (403). **Cap counts active SKUs only** — inactive products do not consume a slot (deactivating frees one). Duplicate SKU → 409. Stale `expectedVersion` → 409 `{ "code": "concurrency" }`. `Version` is an API concurrency token — do not show it in shop-facing UI.
 
-Dashboard: `todaysSales`, `orderCount`, `pendingWhatsAppCount` are 0 until orders exist; `lowStock` is active products with `stock <= lowStockThreshold` (max 50).
+Dashboard: `todaysSales` and `orderCount` use the UTC date of `PaidAt` for orders still `Paid` or `Fulfilled` (cancelled sales are excluded; Ghana is UTC). `pendingWhatsAppCount` is WhatsApp+Pending (0 until that slice). `recentOrders` is the 10 newest. `lowStock` is active products with `stock <= lowStockThreshold` (max 50).
+
+Order create: `customerName`, `customerPhone?`, `notes?`, `confirmImmediately`, `lines[]` (`productId`, `quantity`). Prices are snapshotted from the catalog. Duplicate product ids → 400. Inactive product → 409. Starter monthly cap → 403. Confirm with insufficient stock → 409.
+
+Order status: `Pending → Confirmed → Paid → Fulfilled`, or `Cancelled` from Pending/Confirmed/Paid. Stale `expectedVersion` → 409 `{ "code": "concurrency" }`. Illegal jump (e.g. Pending → Paid) → 409. `Version` is an API concurrency token — do not show it in shop-facing UI.
 
 Exception middleware maps:
 
@@ -81,18 +89,20 @@ Exception middleware maps:
 
 **Product:** Id, ShopId, Name (≤200), Sku (≤50, unique per shop, stored uppercase), Category? (≤80), Price (0–999,999,999.99, numeric 12,2), Stock (0–99,999,999), LowStockThreshold (0–99,999,999), IsActive, Version (concurrency token, ≥1), CreatedAt, UpdatedAt. `IsLowStock` is computed (`Stock <= LowStockThreshold`), not stored.
 
-**StockMovement:** Id, ShopId, ProductId, QuantityDelta, ResultingStock (0–99,999,999), Type (`Adjustment` \| `Reserve` \| `Deduct` \| `Release`), Notes? (≤400), CreatedByUserId?, CreatedAt. Slice 2 writes `Adjustment` only.
+**StockMovement:** Id, ShopId, ProductId, QuantityDelta, ResultingStock (0–99,999,999), Type (`Adjustment` \| `Reserve` \| `Deduct` \| `Release`), Notes? (≤400), CreatedByUserId?, CreatedAt. Manual adjust writes `Adjustment`. Orders write `Reserve` / `Deduct` (audit only after reserve) / `Release`.
+
+**Order:** Id, ShopId, CustomerName (≤200), CustomerPhone? (≤50), Notes? (≤400), Status (`Pending` \| `Confirmed` \| `Paid` \| `Fulfilled` \| `Cancelled`), Source (`Manual` \| `WhatsApp`), NeedsClarification, TotalAmount (GHS, numeric 18,2), Version (concurrency token, ≥1), CreatedByUserId?, CreatedAt, UpdatedAt, ConfirmedAt?, PaidAt?, FulfilledAt?, CancelledAt?
+
+**OrderLine:** Id, OrderId, ShopId, ProductId, ProductName snapshot (≤200), Sku snapshot (≤50, uppercase), Quantity (1–99,999,999), UnitPrice (0–999,999,999.99, numeric 12,2), LineTotal (numeric 18,2). Unique product per order.
 
 Roles: `UserRole`. WhatsApp: `Disconnected` \| `Connected` \| `Error`. DB CHECKs enforce enum sets and non-empty required strings — see Constraints below.
 
 ## Domain (planned — add when that slice starts)
 
-- **Customer** — shop’s WhatsApp end-customer (not Platform Customer)
-- **Order** — status `Pending \| Confirmed \| Paid \| Fulfilled \| Cancelled`, source `WhatsApp \| Manual`
-- **OrderLine** — product, qty, unit price
+- **Customer** — shop’s WhatsApp end-customer (not Platform Customer); manual orders store name/phone on the order
 - **Payment** — Paystack reference, status, amount
 
-**Stock rule:** reserve on Confirmed, deduct on Paid, release on Cancelled. Pending WhatsApp drafts do not touch stock.
+**Stock rule:** reserve on Confirmed (atomic decrement), deduct on Paid is an audit movement only (stock already held), release on Cancelled from Confirmed or Paid. Pending WhatsApp drafts do not touch stock.
 
 **Optimistic concurrency (prevent overselling):** On stock deduction/reserve/release, the SQL update must be atomic, e.g.:
 
@@ -152,7 +162,7 @@ When adding or changing a writeable field, complete **all** applicable layers in
 | Phone | 50 | Optional |
 | LicenseLookupHash | 64 | Exact SHA-256 hex (domain + DB check) |
 
-Enums with DB CHECKs: `UserRole` → `Owner` \| `Assistant`; `WhatsAppConnectionStatus` → `Disconnected` \| `Connected` \| `Error`; `StockMovementType` → `Adjustment` \| `Reserve` \| `Deduct` \| `Release`.
+Enums with DB CHECKs: `UserRole` → `Owner` \| `Assistant`; `WhatsAppConnectionStatus` → `Disconnected` \| `Connected` \| `Error`; `StockMovementType` → `Adjustment` \| `Reserve` \| `Deduct` \| `Release`; `OrderStatus` → `Pending` \| `Confirmed` \| `Paid` \| `Fulfilled` \| `Cancelled`; `OrderSource` → `Manual` \| `WhatsApp`.
 
 ### Product field limits (canonical)
 
@@ -170,6 +180,21 @@ Canonical constants: `OrderFlow.Domain.ProductConstraints`.
 | Version | — | `long`, starts at 1; optimistic concurrency |
 
 Angular `PRODUCT_FIELD_LIMITS` lives in `features/products/data/product.models.ts` and must stay in sync with these values.
+
+### Order field limits (canonical)
+
+Canonical constants: `OrderFlow.Domain.OrderConstraints`.
+
+| Field | Max | Notes |
+|-------|-----|--------|
+| CustomerName | 200 | Required, trimmed |
+| CustomerPhone | 50 | Optional |
+| Notes | 400 | Optional |
+| Lines | 50 | At least one; unique `productId` per order |
+| Quantity | 99,999,999 | Per line, min 1 |
+| Version | — | `long`, starts at 1; optimistic concurrency on status |
+
+Angular `ORDER_FIELD_LIMITS` lives in `features/orders/data/order.models.ts` and must stay in sync with these values.
 
 ### New entity checklist
 
@@ -219,7 +244,12 @@ frontend/src/app/
       pages/product-list/
       pages/product-form/ # /new and /:id
       routes.ts
-    # Slice 3+: orders/{ data/, pages/, routes.ts }
+    orders/
+      data/               # OrderDto, ORDER_FIELD_LIMITS, order.api.ts
+      pages/order-list/
+      pages/order-form/   # /new
+      pages/order-detail/ # /:id + status actions
+      routes.ts
   app.routes.ts       # compose lazy feature routes
   app.routes.server.ts # prerender `/` and `/404`; client-render `/login` and `/app`
   environments/
@@ -240,8 +270,11 @@ frontend/src/app/
 | `/app/products` | — | `features/products/routes` (list) |
 | `/app/products/new` | — | add product |
 | `/app/products/:id` | — | edit product + stock adjust |
+| `/app/orders` | — | `features/orders/routes` (list) |
+| `/app/orders/new` | — | create manual order |
+| `/app/orders/:id` | — | order detail + status actions |
 
-Future children under `/app`: `orders`, `settings` (add nav links in shell only when routes exist).
+Future children under `/app`: `settings`.
 
 ### Rules
 

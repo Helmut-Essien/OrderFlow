@@ -24,6 +24,11 @@ public interface IProductRepository
     /// <summary>Untracked lookup by shop and already-normalized (uppercase) SKU.</summary>
     Task<Product?> GetBySkuAsync(string shopId, string sku, CancellationToken cancellationToken = default);
 
+    /// <summary>Untracked load of many products by id. Missing ids are omitted (caller treats as 404).</summary>
+    Task<IReadOnlyList<Product>> GetByIdsAsync(
+        IReadOnlyCollection<string> ids,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Paged catalog. Projects to <see cref="ProductDto"/> in SQL (no full entity materialize).</summary>
     Task<ProductListResult> ListAsync(
         string shopId,

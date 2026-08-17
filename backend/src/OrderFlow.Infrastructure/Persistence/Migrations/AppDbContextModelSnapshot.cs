@@ -22,6 +22,164 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Order", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("FulfilledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("NeedsClarification")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ShopId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("ShopId", "CreatedAt");
+
+                    b.HasIndex("ShopId", "PaidAt");
+
+                    b.HasIndex("ShopId", "Status");
+
+                    b.ToTable("Orders", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Orders_CustomerNameNotEmpty", "char_length(btrim(\"CustomerName\")) > 0");
+
+                            t.HasCheckConstraint("CK_Orders_Source", "\"Source\" IN ('Manual', 'WhatsApp')");
+
+                            t.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Pending', 'Confirmed', 'Paid', 'Fulfilled', 'Cancelled')");
+
+                            t.HasCheckConstraint("CK_Orders_TotalAmountNonNegative", "\"TotalAmount\" >= 0");
+
+                            t.HasCheckConstraint("CK_Orders_VersionPositive", "\"Version\" >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("OrderFlow.Domain.Entities.OrderLine", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("ProductId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ShopId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("OrderId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("OrderLines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_OrderLines_LineTotalNonNegative", "\"LineTotal\" >= 0");
+
+                            t.HasCheckConstraint("CK_OrderLines_ProductNameNotEmpty", "char_length(btrim(\"ProductName\")) > 0");
+
+                            t.HasCheckConstraint("CK_OrderLines_QuantityRange", "\"Quantity\" >= 1 AND \"Quantity\" <= 99999999");
+
+                            t.HasCheckConstraint("CK_OrderLines_SkuNotEmpty", "char_length(btrim(\"Sku\")) > 0");
+
+                            t.HasCheckConstraint("CK_OrderLines_UnitPriceNonNegative", "\"UnitPrice\" >= 0 AND \"UnitPrice\" <= 999999999.99");
+                        });
+                });
+
             modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>
                 {
                     b.Property<string>("Id")
@@ -272,6 +430,36 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Order", b =>
+                {
+                    b.HasOne("OrderFlow.Domain.Entities.Shop", "Shop")
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("OrderFlow.Domain.Entities.OrderLine", b =>
+                {
+                    b.HasOne("OrderFlow.Domain.Entities.Order", "Order")
+                        .WithMany("Lines")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OrderFlow.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>
                 {
                     b.HasOne("OrderFlow.Domain.Entities.Shop", "Shop")
@@ -303,6 +491,11 @@ namespace OrderFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("OrderFlow.Domain.Entities.Order", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("OrderFlow.Domain.Entities.Product", b =>

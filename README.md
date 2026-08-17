@@ -59,6 +59,8 @@ First-time **sign up**:
 
 Later visits use **Sign in** with the same email and password. The license key is not asked again.
 
+Authenticated shops can create **manual orders** from `/app/orders` (or `POST /api/orders`) and move status on the order detail page (`POST /api/orders/{id}/status`). Confirmed orders reserve stock; cancelling a Confirmed or Paid order returns it. Dashboard KPIs use today’s still-paid totals.
+
 ## Configuration
 
 | Setting | Development default |

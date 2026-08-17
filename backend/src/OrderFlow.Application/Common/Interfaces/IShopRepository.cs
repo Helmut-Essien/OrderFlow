@@ -9,7 +9,7 @@ public interface IShopRepository
     Task<Shop?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Transaction-scoped advisory lock so concurrent product creates serialize on <c>PlanQuota.MaxProducts</c>.
+    /// Transaction-scoped advisory lock so concurrent product or order creates serialize on plan caps.
     /// Must run inside <see cref="IUnitOfWork.ExecuteInTransactionAsync"/>.
     /// </summary>
     Task AcquirePlanCapLockAsync(string shopId, CancellationToken cancellationToken = default);

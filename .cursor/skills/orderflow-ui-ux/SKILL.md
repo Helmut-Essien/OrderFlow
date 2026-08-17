@@ -49,7 +49,7 @@ App chrome lives in `core/layout/ShellComponent`. Do **not** put a second header
 
 **Bottom nav**
 
-- Only links for routes that exist (Dashboard, Inventory today; Orders when slice 3 ships)
+- Only links for routes that exist (Dashboard, Inventory, Orders; Settings later)
 - Active: `bg-forest text-white` (same as sidebar), not forest text alone
 - `lg:hidden` on top bar + bottom nav; `hidden lg:flex` on sidebar
 
@@ -62,7 +62,7 @@ App chrome lives in `core/layout/ShellComponent`. Do **not** put a second header
 | Orders | `/app/orders` | Slice 3+ |
 | Customers | `/app/customers` | Later |
 | Settings | `/app/settings` | Slice 6 |
-| + New Order | action | **Gold** accent only (when orders exist) |
+| + New Order | action | **Gold** accent in the **sidebar** only (not cramped into bottom nav) |
 | Support / Logout | footer | Logout → `/login` |
 
 ## Screen patterns
@@ -103,6 +103,15 @@ Prefer **illustrated gateway** over a bare centered card.
 - Cards until `lg` (name, SKU, category, price, qty, status); **table from `lg`**
 - Low stock: strong qty color + pill
 - Pagination: “Showing x to y of n”
+
+### Orders
+
+- Title + gold **New Order** (`w-full` until `sm`; sidebar gold CTA on desktop — not in bottom nav)
+- Search + status chips: **horizontal scroll** on phone; wrap from `md`
+- Cards until `lg`; **table from `lg`**
+- Status pills: Paid/Fulfilled success, Confirmed forest tint, Cancelled error, Pending neutral
+- Empty shop ≠ no matches. Plan monthly cap is advisory copy; do not hide New Order from unfiltered `totalCount`
+- Detail: forest forward actions + outline Cancel with a second confirm; never display `version`
 
 ### Add / Edit Product
 

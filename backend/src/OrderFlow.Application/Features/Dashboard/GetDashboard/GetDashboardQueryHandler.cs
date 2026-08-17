@@ -6,28 +6,37 @@ using OrderFlow.Shared.DTOs.Dashboard;
 namespace OrderFlow.Application.Features.Dashboard.GetDashboard;
 
 /// <summary>
-/// Builds dashboard numbers for the JWT shop. Low-stock is live; sales/orders/WhatsApp are placeholders until slice 3+.
+/// Builds dashboard numbers for the JWT shop. Low-stock and order KPIs are SQL aggregations; pending WhatsApp is 0 until that slice writes those rows.
 /// </summary>
 public sealed class GetDashboardQueryHandler(
     ICurrentUser currentUser,
-    IProductRepository products) : IRequestHandler<GetDashboardQuery, DashboardDto>
+    IProductRepository products,
+    IOrderRepository orders) : IRequestHandler<GetDashboardQuery, DashboardDto>
 {
-    /// <summary>Returns live low-stock plus placeholder sales/orders/WhatsApp counts until those slices exist.</summary>
+    /// <summary>
+    /// Returns live low-stock plus today’s still-paid sales/count (UTC date of <c>PaidAt</c>, excluding Cancelled) and the 10 newest orders.
+    /// </summary>
     public async Task<DashboardDto> Handle(GetDashboardQuery request, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || string.IsNullOrWhiteSpace(currentUser.ShopId))
             throw new UnauthorizedAppException("Not authenticated.");
 
-        var lowStock = await products.GetLowStockAsync(currentUser.ShopId, cancellationToken);
+        var shopId = currentUser.ShopId;
+        var now = DateTime.UtcNow;
+        var dayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+        var dayEnd = dayStart.AddDays(1);
+
+        var lowStock = await products.GetLowStockAsync(shopId, cancellationToken);
+        var orderStats = await orders.GetDashboardStatsAsync(shopId, dayStart, dayEnd, cancellationToken);
 
         return new DashboardDto
         {
-            // Honest zeros until orders/WhatsApp slices exist — do not invent sample charts.
-            TodaysSales = 0m,
-            OrderCount = 0,
-            PendingWhatsAppCount = 0,
+            TodaysSales = orderStats.TodaysSales,
+            OrderCount = orderStats.TodaysPaidOrderCount,
+            PendingWhatsAppCount = orderStats.PendingWhatsAppCount,
             LowStockCount = lowStock.Count,
-            LowStock = lowStock
+            LowStock = lowStock,
+            RecentOrders = orderStats.RecentOrders
         };
     }
 }

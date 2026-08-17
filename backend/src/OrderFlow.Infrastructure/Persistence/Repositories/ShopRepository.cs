@@ -19,7 +19,7 @@ public sealed class ShopRepository(AppDbContext db) : IShopRepository
     /// <inheritdoc />
     public Task AcquirePlanCapLockAsync(string shopId, CancellationToken cancellationToken = default)
     {
-        // Advisory lock (not FOR UPDATE on a subquery) so two creates cannot both pass the active-count check.
+        // Advisory lock (not FOR UPDATE on a subquery) so two creates cannot both pass the cap count.
         var key = PlanCapLockKey(shopId);
         return db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({key})", cancellationToken);
     }

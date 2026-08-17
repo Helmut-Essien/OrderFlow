@@ -7,7 +7,17 @@ export interface LowStockItemDto {
   lowStockThreshold: number;
 }
 
-/** Mirrors `DashboardDto`. Sales/orders/WhatsApp stay 0 until those slices exist. */
+/** Mirrors `DashboardOrderDto` — compact recent-order row. */
+export interface DashboardOrderDto {
+  id: string;
+  customerName: string;
+  status: string;
+  source: string;
+  totalAmount: number;
+  createdAt: string;
+}
+
+/** Mirrors `DashboardDto`. `pendingWhatsAppCount` stays 0 until the WhatsApp slice. */
 export interface DashboardDto {
   todaysSales: number;
   orderCount: number;
@@ -15,4 +25,6 @@ export interface DashboardDto {
   pendingWhatsAppCount: number;
   lowStockCount: number;
   lowStock: LowStockItemDto[];
+  /** Newest first, capped at 10. */
+  recentOrders: DashboardOrderDto[];
 }

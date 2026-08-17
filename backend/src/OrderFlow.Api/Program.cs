@@ -20,7 +20,7 @@ try
 
     builder.WebHost.ConfigureKestrel(options =>
     {
-        // JSON auth/product payloads are small; keep a tight bound until file uploads exist.
+        // JSON auth/product/order payloads are small; keep a tight bound until file uploads exist.
         options.Limits.MaxRequestBodySize = 128 * 1024;
     });
 
@@ -84,7 +84,8 @@ try
                 ip,
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 20,
+                    // Shared WebApplicationFactory uses one IP for every signup; 20/min would 429 the suite.
+                    PermitLimit = builder.Environment.IsEnvironment("Testing") ? 10_000 : 20,
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0,
                     AutoReplenishment = true
