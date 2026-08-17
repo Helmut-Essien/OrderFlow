@@ -7,6 +7,7 @@ Deliver **one slice at a time**. Confirm with the user before starting the next.
 | 0 | Scaffold: sln, Clean Architecture, Angular `frontend`, Docker Postgres, README | **Done** |
 | 1 | Auth + license: JWT, `/login` Auth Gateway, `/app` shell (`core/` + `features/auth|dashboard`) | **Done** |
 | 2 | Products + inventory + dashboard numbers (today’s sales, order count, low stock) | **Done** |
+| — | Landing marketing SEO: prerender `/`, meta/OG/JSON-LD, robots, sitemap | **Done** |
 | 3 | Manual orders + status workflow + stock reserve/deduct | Planned |
 | 4 | WhatsApp webhook, one number per shop, catalog/list messages, strict free-text match | Planned |
 | 5 | Paystack payment links + payment webhook → Paid | Planned |

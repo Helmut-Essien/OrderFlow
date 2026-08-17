@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AUTH_FIELD_LIMITS } from '../../../../core/auth/auth.models';
+import { SeoService } from '../../../../core/seo/seo.service';
 import {
   passwordsMatchValidator,
   requiredTrimmed
@@ -29,6 +30,7 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
 
   readonly mode = signal<'login' | 'signup'>('login');
   readonly submitting = signal(false);
@@ -72,6 +74,7 @@ export class LoginComponent {
       this.route.snapshot.queryParamMap.get('mode') === 'signup' ? 'signup' : 'login';
     this.applyModeValidators(initialMode);
     this.mode.set(initialMode);
+    this.applySeo(initialMode);
   }
 
   /** Switches tabs and re-applies validators (license/shop required only on signup). */
@@ -84,6 +87,7 @@ export class LoginComponent {
       this.form.controls.confirmPassword.setValue('');
     }
     this.applyModeValidators(mode);
+    this.applySeo(mode);
   }
 
   showError(
@@ -160,6 +164,13 @@ export class LoginComponent {
         },
         error: (err) => this.handleError(err)
       });
+  }
+
+  /** Login/signup stay `noindex` so they do not compete with the marketing home. */
+  private applySeo(mode: 'login' | 'signup'): void {
+    this.seo.applyPrivatePage(
+      mode === 'signup' ? 'Create your shop | OrderFlow' : 'Sign in | OrderFlow'
+    );
   }
 
   private applyModeValidators(mode: 'login' | 'signup'): void {

@@ -1,9 +1,9 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnDestroy,
+  afterNextRender,
   computed,
   inject,
   signal
@@ -11,6 +11,7 @@ import {
 import { NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { SeoService } from '../../../../core/seo/seo.service';
 
 interface PlanCard {
   name: string;
@@ -34,12 +35,18 @@ interface PlanCard {
     '[class.of-lp-reduced]': 'reducedMotion()'
   }
 })
-export class LandingComponent implements AfterViewInit, OnDestroy {
+export class LandingComponent implements OnDestroy {
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly seo = inject(SeoService);
   readonly auth = inject(AuthService);
 
   readonly menuOpen = signal(false);
   readonly year = new Date().getFullYear();
+  /**
+   * False until after hydration so prerendered guest CTAs match the server HTML.
+   * Flipping auth CTAs during prerender would mismatch hydration.
+   */
+  readonly sessionReady = signal(false);
   /** When true, illustration loops stay static and reveal classes apply immediately. */
   readonly reducedMotion = signal(false);
   readonly tiltX = signal(0);
@@ -85,35 +92,12 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   private observer: IntersectionObserver | null = null;
 
-  ngAfterViewInit(): void {
-    const reduced =
-      typeof matchMedia !== 'undefined' &&
-      matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    this.reducedMotion.set(reduced);
-
-    const nodes = Array.from(
-      this.host.nativeElement.querySelectorAll('.of-reveal, .of-reveal-left')
-    ) as HTMLElement[];
-
-    if (reduced) {
-      nodes.forEach((el: HTMLElement) => el.classList.add('of-reveal-visible'));
-      return;
-    }
-
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('of-reveal-visible');
-            this.observer?.unobserve(entry.target);
-          }
-        }
-      },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
-    );
-
-    nodes.forEach((el: HTMLElement) => this.observer?.observe(el));
+  constructor() {
+    this.seo.applyMarketingHome();
+    afterNextRender(() => {
+      this.sessionReady.set(true);
+      this.initMotion();
+    });
   }
 
   ngOnDestroy(): void {
@@ -144,5 +128,36 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  private initMotion(): void {
+    const reduced =
+      typeof matchMedia !== 'undefined' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.reducedMotion.set(reduced);
+
+    const nodes = Array.from(
+      this.host.nativeElement.querySelectorAll('.of-reveal, .of-reveal-left')
+    ) as HTMLElement[];
+
+    if (reduced) {
+      nodes.forEach((el: HTMLElement) => el.classList.add('of-reveal-visible'));
+      return;
+    }
+
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('of-reveal-visible');
+            this.observer?.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+    );
+
+    nodes.forEach((el: HTMLElement) => this.observer?.observe(el));
   }
 }

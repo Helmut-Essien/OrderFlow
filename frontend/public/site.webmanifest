@@ -1,0 +1,22 @@
+{
+  "name": "OrderFlow",
+  "short_name": "OrderFlow",
+  "description": "Take WhatsApp orders, keep inventory you can trust, and collect Paystack payments in GHS. Built for retailers in Accra, Kumasi, and across Ghana.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F3EEE3",
+  "theme_color": "#0F6B4C",
+  "lang": "en-GH",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

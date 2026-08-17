@@ -91,7 +91,16 @@ dotnet publish backend/src/OrderFlow.Api/OrderFlow.Api.csproj -c Release
 cd frontend && npm run build
 ```
 
-`ng build` uses the production configuration by default. The SPA calls same-origin `/api/...`; put nginx or Caddy in front and proxy `/api` to the OrderFlow API. Health check: `GET /health`.
+`ng build` uses the production configuration by default and **prerenders `/`** (and `/404`) so crawlers receive marketing HTML without JavaScript. Set the public origin before a marketing deploy:
+
+```bash
+export ORDERFLOW_SITE_URL="https://your-domain.example"
+cd frontend && npm run build
+```
+
+That writes absolute canonical, Open Graph, JSON-LD, and `sitemap.xml` values (no trailing slash on the origin). The SPA calls same-origin `/api/...`; put nginx or Caddy in front and proxy `/api` to the OrderFlow API. Serve prerendered `index.html` at `/`. For `/login` and `/app`, fall back to `index.csr.html` when present so a hard refresh does not flash the marketing page. Map missing URLs to `/404` with HTTP 404. Health check: `GET /health`.
+
+`public/robots.txt` allows `/` and disallows `/login`, `/app`, and `/404`.
 
 ## Tests
 

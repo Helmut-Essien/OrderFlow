@@ -3,7 +3,8 @@ name: orderflow-ui-ux
 description: >-
   OrderFlow UI/UX: mobile-first shells (bottom nav until lg, sidebar lg+),
   iOS safe areas, Auth Gateway 42svh brand panel, dashboard, inventory cards
-  until lg, product forms, landing with motion flair, atmosphere textures.
+  until lg, product forms, landing with motion flair, atmosphere textures,
+  and landing marketing SEO (prerender, meta/OG, noindex on /login and /app).
   Form field limits and validators must mirror backend Shared DTOs in the same
   slice. Generated Angular is production-ready (same-origin API, OnPush, lazy
   routes) and performance-conscious (track-by id, debounced search, no giant
@@ -122,7 +123,8 @@ Prefer **illustrated gateway** over a bare centered card.
 - Pricing: Starter / Growth / Business — limits from product skill
 - Footer: legal + WhatsApp support
 - Localized proof OK (Accra / Kumasi) — keep short
-- **Mobile:** hamburger + drawer; sticky Get started + safe-area; hero type `clamp` **must be able to shrink below 44px** (do not set a 2.75rem minimum); 3D stage/props scale down under `sm`
+- **SEO:** one H1 (hero); skip link + `<main>`; title/description in `LANDING_SEO` written at prerender (document shell stays `noindex` with no OG); Open Graph + Twitter + JSON-LD graph (no fake prices); prerender `/` and `/404`; `noindex` on `/login`, `/app`, and unknown URLs; never redirect `**` to `/`. Auth-dependent CTAs wait until after hydration so prerendered guest HTML matches. `html lang="en-GH"`.
+- **Mobile:** hamburger + drawer; sticky Get started with `env(safe-area-inset-bottom)` + spacer; hero type `clamp` **must be able to shrink below 44px** (do not set a 2.75rem minimum); 3D stage/props scale down under `sm`
 
 ## Mobile layout rules (every new screen)
 
@@ -156,6 +158,7 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 
 - Shell: `core/layout/ShellComponent` under `/app` — sidebar **`lg+` only**; top bar + bottom nav below `lg`
 - Pages: `features/{name}/pages/...`; feature `routes.ts` lazy-loaded; new components use `ChangeDetectionStrategy.OnPush`
+- Marketing SEO: `SeoService` on landing (`applyMarketingHome`) vs login/shell (`applyPrivatePage`); keep `index.html` in sync with `LANDING_SEO`
 - Shop/plan: `ShopStateService` — prefer over reading auth only in templates when sharing across features
 - Tokens: `forest` / `gold` / `paper` / `ink`; atmosphere from [atmosphere.md](../orderflow-design-system/atmosphere.md)
 - Currency pipe: `shared/pipes/ghsCurrency`
@@ -197,3 +200,8 @@ Structure and layering: [orderflow reference](../orderflow/reference.md) (Fronte
 - Shipping undocumented public TypeScript APIs, or commenting every line of a template
 - Default change detection on new list/table pages, `@for` without `track`, or fetching the full catalog to filter in the browser
 - Hard-coding `localhost` API URLs (production builds must use `environment.production.ts`)
+- Shipping the landing as client-only HTML (`<app-root>` empty) without prerender
+- Title-only `OrderFlow` with no meta description / Open Graph on the **prerendered** home
+- Indexing `/login` or `/app`, putting marketing OG tags in the HTML shell, or fake plan prices in JSON-LD
+- Flipping landing auth CTAs during prerender (hydration mismatch)
+- `{ path: '**', redirectTo: '' }` (unknown URLs must 404, not clone the homepage)

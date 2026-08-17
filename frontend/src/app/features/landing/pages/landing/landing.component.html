@@ -1,4 +1,10 @@
 <div class="min-h-full bg-paper text-ink">
+  <!-- Skip link: visible on keyboard focus so the sticky header is not a trap. -->
+  <a
+    href="#main"
+    class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-forest focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white">
+    Skip to content
+  </a>
   <!-- Nav -->
   <header class="sticky top-0 z-40 border-b border-[#E5E0D5]/80 bg-paper/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
     <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -14,7 +20,7 @@
       </nav>
 
       <div class="hidden items-center gap-3 lg:flex">
-        @if (auth.isAuthenticated) {
+        @if (sessionReady() && auth.isAuthenticated) {
           <a
             routerLink="/app"
             class="inline-flex min-h-[44px] items-center rounded-lg bg-forest px-5 py-2.5 text-sm font-semibold tracking-wide text-white hover:bg-forest-dark transition-colors">
@@ -62,7 +68,7 @@
           <a href="#about" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">About</a>
           <a href="#contact" class="min-h-[44px] rounded-lg px-3 py-3 font-semibold text-ink hover:bg-white" (click)="closeMenu()">Contact</a>
           <div class="mt-3 flex flex-col gap-2 border-t border-[#E5E0D5] pt-4">
-            @if (auth.isAuthenticated) {
+            @if (sessionReady() && auth.isAuthenticated) {
               <a
                 routerLink="/app"
                 class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-forest px-5 py-3 font-semibold text-white"
@@ -90,6 +96,7 @@
     }
   </header>
 
+  <main id="main">
   <!-- Hero -->
   <section
     class="relative overflow-hidden bg-forest text-white of-texture-grain of-texture-dots-on-forest"
@@ -109,7 +116,7 @@
           Turn every chat into a confirmed sale — inventory, payments, and your shop dashboard in one warm workflow.
         </p>
         <div class="of-lp-cta-row mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          @if (auth.isAuthenticated) {
+          @if (sessionReady() && auth.isAuthenticated) {
             <a
               routerLink="/app"
               class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-semibold tracking-wide text-forest hover:bg-paper transition-colors">
@@ -442,6 +449,7 @@
       </div>
     </div>
   </section>
+  </main>
 
   <!-- Footer -->
   <footer class="border-t border-[#E5E0D5] bg-paper">
@@ -461,7 +469,7 @@
   </footer>
 
   <!-- Mobile sticky CTA -->
-  @if (!auth.isAuthenticated) {
+  @if (!sessionReady() || !auth.isAuthenticated) {
     <div class="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5E0D5] bg-paper/95 p-3 backdrop-blur-md lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <a
         routerLink="/login"

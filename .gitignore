@@ -483,5 +483,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Generated from environment.siteUrl by frontend/scripts/write-public-seo.mjs
+frontend/public/sitemap.xml
+
 # Vim temporary swap files
 *.swp

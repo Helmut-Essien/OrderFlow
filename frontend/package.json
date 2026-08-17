@@ -4,7 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "prestart": "node scripts/write-public-seo.mjs",
     "build": "ng build",
+    "prebuild": "node scripts/write-public-seo.mjs --production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -16,7 +18,9 @@
     "@angular/forms": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
+    "@angular/platform-server": "^19.2.25",
     "@angular/router": "^19.2.0",
+    "@angular/ssr": "^19.2.27",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -26,6 +30,7 @@
     "@angular/cli": "^19.2.27",
     "@angular/compiler-cli": "^19.2.0",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.20.1",
     "autoprefixer": "^10.5.4",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",

@@ -81,7 +81,7 @@ Use `/** */` JSDoc on **exported** APIs. Components: document the class when the
 | `*.api.ts` service | Class summary (which controller it mirrors). Method summaries for **every** HTTP method (`list`/`get`/`create`/`update`/extras) — do not leave `create` undocumented. |
 | `*.models.ts` | File or type summary. `*_FIELD_LIMITS` must note they mirror Shared DTO `[StringLength]` / Domain constraints. Document helpers (`generateSku`). |
 | Validators / pipes | Export summary + `@param` / `@returns` when the contract is not obvious. |
-| Core services (`AuthService`, `ShopStateService`) | Class summary; document Signals (what they hold, who updates them); document side effects (token storage, logout navigation). |
+| Core services (`AuthService`, `ShopStateService`, `SeoService`) | Class summary; document Signals (what they hold, who updates them); document side effects (token storage, logout navigation, document title/robots). |
 | Guards / interceptor | Why they exist and what they read (JWT, guest vs auth). |
 | Standalone component | Class summary (the job of the view). Public methods used from the template. Signals that encode workflow (loading, submitting, concurrency retry). |
 | `routes.ts` | File-level note only if the route tree is non-obvious (guards, lazy load). |

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 
-/** Root routes: landing `/`, guest `/login`, authenticated `/app` shell with lazy feature children. */
+/** Root routes: landing `/`, guest `/login`, authenticated `/app`, public 404 (never redirect unknown URLs home). */
 export const routes: Routes = [
   {
     path: '',
@@ -31,5 +31,14 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: '' }
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./core/not-found/not-found.component').then((m) => m.NotFoundComponent)
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./core/not-found/not-found.component').then((m) => m.NotFoundComponent)
+  }
 ];

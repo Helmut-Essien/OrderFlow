@@ -28,12 +28,13 @@ Existing host wiring lives in `OrderFlow.Api/Program.cs`, `StartupConfiguration`
 
 ## Frontend
 
-- **`environment.ts`:** `production: false`, `apiUrl: 'http://localhost:5180'`.
-- **`environment.production.ts`:** `production: true`, `apiUrl: ''` (same-origin `/api/...` behind nginx/Caddy). Add `fileReplacements` in `angular.json` production config. Never hard-code `localhost` in feature `*.api.ts`.
+- **`environment.ts`:** `production: false`, `apiUrl: 'http://localhost:5180'`, `siteUrl: 'http://localhost:4200'`.
+- **`environment.production.ts`:** `production: true`, `apiUrl: ''` (same-origin `/api/...` behind nginx/Caddy), `siteUrl` from `public-origin.generated.ts` (set `ORDERFLOW_SITE_URL` before `npm run build`). Add `fileReplacements` in `angular.json` production config. Never hard-code `localhost` in feature `*.api.ts`.
 - **Guards / interceptor:** expired JWT is signed out; 401 on `/app` clears session. Do not attach tokens to login/signup error handling in a way that loops.
 - **Forms:** `*_FIELD_LIMITS` + validators + `[attr.maxlength]` + trim/normalize on submit — same slice as the API.
-- **Build:** production `outputHashing: all`; keep `anyComponentStyle` budget honest (landing illustration CSS may be larger — raise the budget in the same slice rather than shipping a failing `ng build`).
-- **PII:** JWT stays in `localStorage` key `orderflow.token` for MVP; do not log tokens.
+- **Marketing SEO:** The HTML shell is `noindex` with no Open Graph. Only prerendered `/` calls `applyMarketingHome()`. `/login`, `/app`, and unknown URLs are `noindex` and must not reuse homepage OG tags. `robots.txt` disallows `/login`, `/app`, `/404`. Absolute canonical/OG/sitemap loc values need `ORDERFLOW_SITE_URL` at build (writes `public-origin.generated.ts`). Auth CTAs on the landing page wait until after hydration (`sessionReady`) so prerender HTML matches. `html lang="en-GH"`.
+- **Build:** production `outputHashing: all`; keep `anyComponentStyle` budget honest (landing illustration CSS may be larger — raise the budget in the same slice rather than shipping a failing `ng build`). `npm run build` prerenders `/` and `/404` (`outputMode: static`); do not add a Node SSR server for MVP. nginx/Caddy: `/` uses prerendered `index.html`; SPA fallback for `/login` and `/app` should be `index.csr.html` when present (`try_files $uri $uri/ /index.csr.html`) so a hard refresh does not flash the landing HTML. Map missing files to `/404` with HTTP 404 (`error_page 404 /404/index.html`).
+- **PII:** JWT stays in `localStorage` key `orderflow.token` for MVP; do not log tokens. `localStorage` is browser-only (`isPlatformBrowser`) so prerender does not crash.
 
 ## Slice checklist (tick in the same PR)
 
@@ -43,5 +44,6 @@ Existing host wiring lives in `OrderFlow.Api/Program.cs`, `StartupConfiguration`
 - [ ] Auth/webhook paths: rate limit, signature verify, payload bounds
 - [ ] Tenant ShopId on new tables + query filter
 - [ ] environment.production.ts still same-origin; no localhost in dist
+- [ ] Landing `/` still prerenders; `ORDERFLOW_SITE_URL` set before a public marketing deploy
 - [ ] npm run build (production) and dotnet test pass
 ```

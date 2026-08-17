@@ -56,6 +56,19 @@ Marketing convert → signup. Brand-forward, illustrated, warm.
 - 3D stage ~240px on phone, larger from `sm` / `lg`; scale `--phone-w` / `--cube` down on small screens
 - Desktop (`lg+`): nav links + side-by-side hero art
 
+### SEO (required with the landing)
+
+- Document shell (`index.html`) is generic + `noindex` with **no** OG/JSON-LD — so `/login` CSR fallback cannot look like home
+- Unique title + description live in `LANDING_SEO`; prerender of `/` writes them via `SeoService.applyMarketingHome()`
+- Open Graph + Twitter `summary_large_image` + `public/assets/og/og-image.jpg` (1200×630) with width/height/alt
+- JSON-LD `@graph` of Organization + WebSite + SoftwareApplication — no invented GHS prices
+- `html lang="en-GH"`; hreflang `en-GH` + `x-default` when a public origin exists
+- Prerender `/` and `/404`. `/login` and `/app` are client-rendered and `noindex`
+- `robots.txt` allows `/`, disallows `/login`, `/app`, `/404`. Sitemap loc is absolute from `ORDERFLOW_SITE_URL`
+- One H1 (hero). Section titles are H2; feature/plan names H3. Skip link + `<main id="main">`
+- Guest CTAs in the prerendered HTML; session CTAs only after hydration (`sessionReady`)
+- Unknown URLs render the 404 page — never `redirectTo: ''`
+
 ---
 
 ## 3. Shop Dashboard

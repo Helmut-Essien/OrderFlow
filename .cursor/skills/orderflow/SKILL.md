@@ -9,8 +9,8 @@ description: >-
   checks, FluentValidation, Shared DTOs, Angular limits/validators) in the same
   slice. Generated code must be documented (XML/JSDoc). Use for this repo, any
   implementation slice, auth, shops, products, orders, WhatsApp, payments, plan
-  limits, migrations, validations, production hardening, performance, or local
-  dev. Delivers one slice at a time per user confirmation.
+  limits, migrations, validations, production hardening, performance, landing
+  SEO/prerender, or local dev. Delivers one slice at a time per user confirmation.
 ---
 
 # OrderFlow
@@ -123,7 +123,8 @@ Application depends on Domain + Shared only. Infrastructure implements Applicati
 - Shared DTOs: `[Required]` / `[StringLength]` / `[EmailAddress]` must match FluentValidation + EF `HasMaxLength`
 - Angular: standalone components, `inject()`, `ChangeDetectionStrategy.OnPush`, feature `routes.ts` lazy-loaded from `app.routes.ts`, Tailwind utilities
 - Angular tree: `core/` (auth, layout shell, `ShopStateService`), `shared/` (pipes, **validators**), `features/{name}/pages|data|routes` — see [reference.md](reference.md)
-- Angular routes: `/` (landing), `/login` (guest), `/app` (auth shell + dashboard), `/app/products`
+- Angular routes: `/` (landing, prerendered), `/login` (guest, `noindex`), `/app` (auth shell + dashboard, `noindex`), `/app/products`, `/404` and `**` (`noindex`, never redirect home)
+- Marketing SEO: prerender `/` (`outputMode: static`); HTML shell is `noindex` (no OG); `SeoService` + `ORDERFLOW_SITE_URL` for absolute canonical/OG/sitemap; `/login`, `/app`, and unknown URLs stay `noindex`. Browser-only APIs (`localStorage`, `matchMedia`) must not run during prerender.
 - Angular state: **Signals** + `OnPush`; shop/plan via `ShopStateService` (synced from auth session). No NgRx in MVP. Use `takeUntilDestroyed()` for RxJS cleanup. `@for` must `track` by entity id.
 - Angular forms: field limits live in a named `*_FIELD_LIMITS` constant next to the DTO models (auth: `AUTH_FIELD_LIMITS` in `core/auth/auth.models.ts`); reuse `shared/validators`; HTML `[attr.maxlength]` + inline errors; normalize email `.toLowerCase()` on submit
 - UI: mobile-first; forest `#0F6B4C` + gold `#C9A227` + paper `#F3EEE3`; Auth Gateway + light atmosphere textures/illustration flair. App sidebar only at `lg+`; bottom nav + iOS safe areas below `lg`. Tokens → [orderflow-design-system](../orderflow-design-system/SKILL.md). UX / mobile rules → [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md).

@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
@@ -12,6 +13,7 @@ const TOKEN_KEY = 'orderflow.token';
 /**
  * App-wide session: JWT in `localStorage`, `currentUser` Signal, and shop/plan sync via {@link ShopStateService}.
  * Expired tokens are treated as signed out; there is no refresh-token grant in MVP.
+ * `localStorage` is browser-only so prerender of `/` does not crash.
  * Core must not import feature modules.
  */
 @Injectable({ providedIn: 'root' })
@@ -19,6 +21,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly shopState = inject(ShopStateService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
   private handlingUnauthorized = false;
 
@@ -26,6 +29,10 @@ export class AuthService {
   readonly currentUser = signal<MeResponse | AuthResponse | null>(null);
 
   constructor() {
+    if (!this.isBrowser) {
+      return;
+    }
+
     const token = this.readStoredToken();
     if (!token || isAccessTokenExpired(token)) {
       this.clearSession();
@@ -100,7 +107,9 @@ export class AuthService {
   }
 
   private storeSession(response: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY, response.token);
+    if (this.isBrowser) {
+      localStorage.setItem(TOKEN_KEY, response.token);
+    }
     this.currentUser.set(response);
     this.shopState.setFromSession(response);
     this.scheduleExpiryLogout(Date.parse(response.expiresAt) || readJwtExpiryMs(response.token));
@@ -108,12 +117,18 @@ export class AuthService {
 
   private clearSession(): void {
     this.clearExpiryTimer();
-    localStorage.removeItem(TOKEN_KEY);
+    if (this.isBrowser) {
+      localStorage.removeItem(TOKEN_KEY);
+    }
     this.currentUser.set(null);
     this.shopState.clear();
   }
 
   private readStoredToken(): string | null {
+    if (!this.isBrowser) {
+      return null;
+    }
+
     return localStorage.getItem(TOKEN_KEY);
   }
 

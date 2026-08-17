@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="OrderFlow">
+  <rect width="32" height="32" rx="8" fill="#0F6B4C"/>
+  <path fill="#F3EEE3" d="M8 15.2 16 9l8 6.2v9.3H8z"/>
+  <path fill="#C9A227" d="M8 15.2h16L16 9z"/>
+</svg>

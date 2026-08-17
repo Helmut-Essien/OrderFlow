@@ -197,6 +197,8 @@ frontend/src/app/
   core/
     auth/             # AuthService, guards, interceptor, models (+ AUTH_FIELD_LIMITS), auth HTTP
     layout/           # ShellComponent — sidebar lg+; top bar + bottom nav below lg (safe-area padded)
+    seo/              # SeoService + LANDING_SEO copy (title/description/JSON-LD)
+    not-found/        # Public 404 (`noindex`) — unknown URLs must not redirect to `/`
     shop/             # ShopStateService (shopId, shopName, plan Signals)
   shared/
     pipes/            # ghsCurrency
@@ -219,18 +221,21 @@ frontend/src/app/
       routes.ts
     # Slice 3+: orders/{ data/, pages/, routes.ts }
   app.routes.ts       # compose lazy feature routes
+  app.routes.server.ts # prerender `/` and `/404`; client-render `/login` and `/app`
   environments/
-    environment.ts              # apiUrl http://localhost:5180 (ng serve)
-    environment.production.ts   # apiUrl '' same-origin /api (ng build)
+    environment.ts              # apiUrl http://localhost:5180, siteUrl http://localhost:4200 (ng serve)
+    environment.production.ts   # apiUrl '' same-origin /api; siteUrl from public-origin.generated.ts
+    public-origin.generated.ts  # ORDERFLOW_SITE_URL at build; empty until set
 ```
 
 ### Routing
 
 | Path | Guard | Loads |
 |------|-------|--------|
-| `/` | — | `features/landing/routes` (marketing) |
-| `/login` | `guestGuard` | `features/auth/routes` |
-| `/app` | `authGuard` | `core/layout/ShellComponent` |
+| `/` | — | `features/landing/routes` (marketing, prerendered) |
+| `/login` | `guestGuard` | `features/auth/routes` (`noindex`) |
+| `/app` | `authGuard` | `core/layout/ShellComponent` (`noindex`) |
+| `/404` and `**` | — | `core/not-found` (`noindex`; never redirect unknown URLs to `/`) |
 | `/app` (child `''`) | — | `features/dashboard/routes` |
 | `/app/products` | — | `features/products/routes` (list) |
 | `/app/products/new` | — | add product |
@@ -241,7 +246,7 @@ Future children under `/app`: `orders`, `settings` (add nav links in shell only 
 ### Rules
 
 - Standalone components with `ChangeDetectionStrategy.OnPush`; each feature exports `ROUTES` / `AUTH_ROUTES` / `DASHBOARD_ROUTES` from `routes.ts`
-- JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`
+- JWT in `localStorage` key `orderflow.token`; interceptor attaches `Authorization: Bearer`. Read/write storage only in the browser (`isPlatformBrowser`) so prerender of `/` does not crash.
 - Tailwind tokens: `forest`, `forest-dark`, `gold`, `paper`, `ink`; font Source Sans 3 (Fraunces display on landing headlines only)
 - **Signals:** local UI in components; shop/plan in `ShopStateService` (updated by `AuthService` on login/me/logout). No NgRx. Use `takeUntilDestroyed()` for RxJS cleanup. Debounce search (~300ms) before list HTTP. `@for` tracks entity `id`.
 - **Layering:** `core` must not import `features`. Feature `data/` owns HTTP + DTO models + `*_FIELD_LIMITS` for domain features. Auth HTTP + `AUTH_FIELD_LIMITS` stay in `core/auth`.
@@ -250,7 +255,8 @@ Future children under `/app`: `orders`, `settings` (add nav links in shell only 
 - When adding a feature (e.g. products): create `features/products/{data,pages,routes}`, register under `/app` children, extend shell nav (bottom nav + sidebar, `lg` split), apply the constraints checklist above.
 - **Mobile layout:** follow [orderflow-ui-ux](../orderflow-ui-ux/SKILL.md) — sidebar only at `lg+`, cards until `lg`, `w-full sm:w-auto` primary actions, `env(safe-area-inset-*)` on sticky/fixed chrome.
 - **Documentation:** JSDoc on exported feature APIs — see [documentation.md](documentation.md).
-- **Production SPA:** `environment.production.ts` keeps `apiUrl: ''`; `angular.json` production `fileReplacements` must stay. See [production.md](production.md) and [performance.md](performance.md).
+- **Production SPA:** `environment.production.ts` keeps `apiUrl: ''`; `angular.json` production `fileReplacements` must stay. Set `siteUrl` to the public HTTPS origin before a marketing deploy. See [production.md](production.md) and [performance.md](performance.md).
+- **Landing SEO:** prerender `/` with `outputMode: static` (no Node SSR server). The document shell (`index.html`) is `noindex` with no OG/JSON-LD so `/login` and `/app` CSR fallbacks cannot rank or look like the homepage. `SeoService.applyMarketingHome()` on the landing writes indexable tags during prerender; `applyPrivatePage()` on login, shell, and 404. Keep copy in `core/seo/seo.content.ts`. `robots.txt` allows `/` and disallows `/login`, `/app`, `/404`. Set `ORDERFLOW_SITE_URL` (no trailing slash) before `npm run build` for absolute canonical/OG/sitemap. Do not put fake GHS prices in JSON-LD — plans are license-backed. Unknown routes render `NotFoundComponent`; never `redirectTo: ''`.
 
 ## Documentation conventions
 

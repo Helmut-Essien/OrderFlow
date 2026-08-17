@@ -20,6 +20,7 @@ Shop owners are on phones and often slow networks. Prefer fewer round-trips, sma
 ## Frontend (Angular 19 + Signals)
 
 - **Route-level lazy load** every feature (`loadChildren` / `loadComponent`). Do not eagerly import feature pages from `app.config.ts` or `core/`.
+- **Prerender `/` and `/404`** (`app.routes.server.ts`: `RenderMode.Prerender` on `''` and `404`, `Client` on `**`). Login and `/app` stay CSR. Use `afterNextRender` (not `ngAfterViewInit`) for `matchMedia` / `IntersectionObserver`. Landing auth CTAs wait on `sessionReady` so hydration matches the guest HTML.
 - **`ChangeDetectionStrategy.OnPush`** on new standalone components. Drive UI with Signals (`signal`, `computed`, `resource`/`rxResource` only if already used in-repo). No NgRx.
 - **`@for` always has `track`** (entity `id`, not `$index`, unless the list is truly index-stable).
 - **RxJS:** `takeUntilDestroyed()` on every subscribe. Debounce search inputs (≈300ms) before calling list APIs. Do not re-fetch the full list on every keystroke.
