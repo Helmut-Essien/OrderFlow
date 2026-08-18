@@ -27,6 +27,8 @@ export class OrderDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly seo = inject(SeoService);
+  private currentOrderId: string | null = null;
+  private loadRequestId = 0;
 
   readonly chipClass = orderStatusChipClass;
   readonly order = signal<OrderDto | null>(null);
@@ -59,6 +61,7 @@ export class OrderDetailComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const id = params.get('id');
+        this.currentOrderId = id;
         // Clear stale banners on navigation (including 409-reload flows).
         this.error.set(null);
 
@@ -124,14 +127,23 @@ export class OrderDetailComponent {
   }
 
   private load(id: string): void {
+    const requestId = ++this.loadRequestId;
     this.loading.set(true);
     this.error.set(null);
     this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (order) => {
+        if (requestId !== this.loadRequestId || this.currentOrderId !== id) {
+          return;
+        }
+
         this.order.set(order);
         this.loading.set(false);
       },
       error: (err) => {
+        if (requestId !== this.loadRequestId || this.currentOrderId !== id) {
+          return;
+        }
+
         this.loading.set(false);
         this.error.set(apiErrorMessage(err));
       }

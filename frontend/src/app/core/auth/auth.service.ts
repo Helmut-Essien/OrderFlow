@@ -6,7 +6,7 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ShopStateService } from '../shop/shop-state.service';
 import { AuthResponse, LoginRequest, MeResponse, SignUpRequest } from './auth.models';
-import { isAccessTokenExpired, readJwtExpiryMs } from './jwt';
+import { ACCESS_TOKEN_SKEW_MS, isAccessTokenExpired, readJwtExpiryMs } from './jwt';
 
 const TOKEN_KEY = 'orderflow.token';
 
@@ -142,7 +142,7 @@ export class AuthService {
       return;
     }
 
-    const delay = expiryMs - Date.now();
+    const delay = expiryMs - Date.now() - ACCESS_TOKEN_SKEW_MS;
     if (delay <= 0) {
       this.clearSession();
       return;

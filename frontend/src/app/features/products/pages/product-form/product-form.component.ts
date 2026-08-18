@@ -33,6 +33,7 @@ export class ProductFormComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly seo = inject(SeoService);
+  private loadRequestId = 0;
 
   readonly limits = PRODUCT_FIELD_LIMITS;
   readonly fieldClass =
@@ -93,14 +94,7 @@ export class ProductFormComponent {
         if (id) {
           // Stock is adjusted in a separate form; disable so hidden validators cannot block Save.
           this.form.controls.stock.disable({ emitEvent: false });
-          this.loading.set(true);
-          this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: (product) => this.patchProduct(product),
-            error: (err) => {
-              this.loading.set(false);
-              this.error.set(apiErrorMessage(err));
-            }
-          });
+          this.loadProduct(id);
         } else {
           // New product: enable stock input + keep the default draft values.
           this.form.controls.stock.enable({ emitEvent: false });
@@ -257,6 +251,28 @@ export class ProductFormComponent {
     this.loading.set(false);
   }
 
+  private loadProduct(id: string): void {
+    const requestId = ++this.loadRequestId;
+    this.loading.set(true);
+    this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (product) => {
+        if (requestId !== this.loadRequestId || this.productId() !== id) {
+          return;
+        }
+
+        this.patchProduct(product);
+      },
+      error: (err) => {
+        if (requestId !== this.loadRequestId || this.productId() !== id) {
+          return;
+        }
+
+        this.loading.set(false);
+        this.error.set(apiErrorMessage(err));
+      }
+    });
+  }
+
   private reload(): void {
     const id = this.productId();
     if (!id) {
@@ -264,10 +280,7 @@ export class ProductFormComponent {
     }
 
     this.error.set(null);
-    this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (product) => this.patchProduct(product),
-      error: (err) => this.error.set(apiErrorMessage(err))
-    });
+    this.loadProduct(id);
   }
 
   private handleSaveError(err: HttpErrorResponse): void {

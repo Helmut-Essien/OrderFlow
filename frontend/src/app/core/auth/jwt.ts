@@ -1,3 +1,5 @@
+export const ACCESS_TOKEN_SKEW_MS = 30_000;
+
 /**
  * Reads JWT `exp` without verifying the signature. Used only to drop expired sessions on the client.
  * @returns UTC epoch milliseconds, or null when the token is malformed.
@@ -24,7 +26,7 @@ export function readJwtExpiryMs(token: string): number | null {
 export function isAccessTokenExpired(
   token: string | null,
   nowMs = Date.now(),
-  skewMs = 30_000
+  skewMs = ACCESS_TOKEN_SKEW_MS
 ): boolean {
   if (!token) {
     return true;
