@@ -36,6 +36,11 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
         builder.HasIndex(m => m.ProductId);
         builder.HasIndex(m => new { m.ShopId, m.CreatedAt });
 
+        builder.HasOne<OrderFlow.Domain.Entities.Shop>()
+            .WithMany()
+            .HasForeignKey(m => m.ShopId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<OrderFlow.Domain.Entities.User>()
             .WithMany()
             .HasForeignKey(m => m.CreatedByUserId)

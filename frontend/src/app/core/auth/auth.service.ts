@@ -24,6 +24,7 @@ export class AuthService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
   private handlingUnauthorized = false;
+  private cachedToken: string | null = null;
 
   /** Latest `/me` or login/signup payload. Null after logout or a failed token refresh. */
   readonly currentUser = signal<MeResponse | AuthResponse | null>(null);
@@ -33,13 +34,13 @@ export class AuthService {
       return;
     }
 
-    const token = this.readStoredToken();
-    if (!token || isAccessTokenExpired(token)) {
+    this.cachedToken = this.readStoredToken();
+    if (!this.cachedToken || isAccessTokenExpired(this.cachedToken)) {
       this.clearSession();
       return;
     }
 
-    this.scheduleExpiryLogout(readJwtExpiryMs(token));
+    this.scheduleExpiryLogout(readJwtExpiryMs(this.cachedToken));
     this.refreshMe().subscribe({
       error: () => this.clearSession()
     });
@@ -47,12 +48,11 @@ export class AuthService {
 
   /** OrderFlow JWT, or null when signed out or expired. */
   get token(): string | null {
-    const token = this.readStoredToken();
-    if (!token || isAccessTokenExpired(token)) {
+    if (!this.cachedToken || isAccessTokenExpired(this.cachedToken)) {
       return null;
     }
 
-    return token;
+    return this.cachedToken;
   }
 
   get isAuthenticated(): boolean {
@@ -109,6 +109,7 @@ export class AuthService {
 
   private storeSession(response: AuthResponse): void {
     this.handlingUnauthorized = false;
+    this.cachedToken = response.token;
     if (this.isBrowser) {
       localStorage.setItem(TOKEN_KEY, response.token);
     }
@@ -119,6 +120,7 @@ export class AuthService {
 
   private clearSession(): void {
     this.clearExpiryTimer();
+    this.cachedToken = null;
     if (this.isBrowser) {
       localStorage.removeItem(TOKEN_KEY);
     }
@@ -140,7 +142,7 @@ export class AuthService {
       return;
     }
 
-    const delay = expiryMs - Date.now() - 30_000;
+    const delay = expiryMs - Date.now();
     if (delay <= 0) {
       this.clearSession();
       return;

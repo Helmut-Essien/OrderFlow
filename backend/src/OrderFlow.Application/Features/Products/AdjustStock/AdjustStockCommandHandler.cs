@@ -43,6 +43,9 @@ public sealed class AdjustStockCommandHandler(
                 var existing = await products.GetByIdAsync(request.ProductId, ct)
                     ?? throw new NotFoundAppException("Product not found.");
 
+                if (existing.ShopId != shopId)
+                    throw new NotFoundAppException("Product not found.");
+
                 if (existing.Version != request.ExpectedVersion)
                     throw new ConcurrencyAppException("This product was updated by someone else. Refresh and try again.");
 
@@ -58,6 +61,9 @@ public sealed class AdjustStockCommandHandler(
 
             var product = await products.GetByIdAsync(request.ProductId, ct)
                 ?? throw new NotFoundAppException("Product not found.");
+
+            if (product.ShopId != shopId)
+                throw new NotFoundAppException("Product not found.");
 
             // Same-transaction reload can lag the SQL UPDATE; apply the returned stock before mapping.
             if (product.Version < adjusted.Version)

@@ -19,6 +19,9 @@ export const integerNumber: ValidatorFn = (
   if (value === '' || value === null || value === undefined) {
     return null;
   }
+  if (typeof value === 'string' && value.trim() === '') {
+    return null;
+  }
   return Number.isInteger(Number(value)) ? null : { integer: true };
 };
 

@@ -3,6 +3,9 @@ namespace OrderFlow.Application.Common.Interfaces;
 /// <summary>Commits the current EF change tracker. Call once per use-case after all mutations.</summary>
 public interface IUnitOfWork
 {
+    /// <summary>True when <see cref="ExecuteInTransactionAsync"/> is active. Stock helpers assert this.</summary>
+    bool IsInTransaction { get; }
+
     /// <summary>Persists tracked entity changes. Call once per use-case after mutations.</summary>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 

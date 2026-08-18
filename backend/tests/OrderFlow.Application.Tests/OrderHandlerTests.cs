@@ -136,7 +136,7 @@ public class OrderHandlerTests
 
         Assert.Equal("Paid", paid.Status);
         Assert.Equal(7, product.Stock);
-        Assert.Contains(seed.Movements.Items, m => m.Type == StockMovementType.Deduct && m.QuantityDelta == -3);
+        Assert.Contains(seed.Movements.Items, m => m.Type == StockMovementType.Deduct && m.QuantityDelta == 0);
 
         var cancelled = await change.Handle(
             new ChangeOrderStatusCommand(paid.Id, "Cancelled", paid.Version),

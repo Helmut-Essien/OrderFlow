@@ -61,6 +61,9 @@ public sealed class CreateOrderCommandHandler(
                 if (!byId.TryGetValue(line.ProductId.Trim(), out var product))
                     throw new NotFoundAppException("Product not found.");
 
+                if (product.ShopId != shopId)
+                    throw new NotFoundAppException("Product not found.");
+
                 if (!product.IsActive)
                     throw new ConflictAppException($"{product.Sku} is inactive and cannot be sold.");
 
@@ -90,6 +93,7 @@ public sealed class CreateOrderCommandHandler(
                 await OrderStock.ReserveAsync(
                     products,
                     stockMovements,
+                    unitOfWork,
                     order,
                     shopId,
                     currentUser.UserId,

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { SeoService } from '../../../../core/seo/seo.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
@@ -79,17 +80,15 @@ export class ProductFormComponent {
   });
 
   constructor() {
-    this.seo.applyPrivatePage(this.isNew() ? 'New Product — OrderFlow' : 'Edit Product — OrderFlow');
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const id = params.get('id');
+        this.productId.set(id);
+        this.seo.applyPrivatePage(this.isNew() ? 'New Product — OrderFlow' : 'Edit Product — OrderFlow');
         this.error.set(null);
         this.stockError.set(null);
         this.product.set(null);
-        this.loading.set(!this.isNew()); // optimistic until we know
-
-        this.productId.set(id);
 
         if (id) {
           // Stock is adjusted in a separate form; disable so hidden validators cannot block Save.
@@ -163,7 +162,10 @@ export class ProductFormComponent {
           stock: Number(value.stock),
           lowStockThreshold: Number(value.lowStockThreshold)
         })
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(
+          finalize(() => this.submitting.set(false)),
+          takeUntilDestroyed(this.destroyRef)
+        )
         .subscribe({
           next: () => this.goToInventory(),
           error: (err) => this.handleSaveError(err)
@@ -187,9 +189,11 @@ export class ProductFormComponent {
         isActive: value.isActive,
         expectedVersion: current.version
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        // Do not patch the form first — signal writes in this tick can abort the navigation.
         next: () => this.goToInventory(),
         error: (err) => this.handleSaveError(err)
       });
@@ -219,12 +223,13 @@ export class ProductFormComponent {
         expectedVersion: current.version,
         notes: notes || undefined
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.adjusting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        // Same as Save: skip form patch so signal writes cannot cancel the route change.
         next: () => this.goToInventory(),
         error: (err: HttpErrorResponse) => {
-          this.adjusting.set(false);
           this.stockError.set(apiErrorMessage(err));
           if (err.status === 409) {
             this.reload();
@@ -235,8 +240,6 @@ export class ProductFormComponent {
 
   /** Leaves the form after a successful create, catalog save, or stock adjust so Inventory shows the new qty. */
   private goToInventory(): void {
-    this.submitting.set(false);
-    this.adjusting.set(false);
     void this.router.navigateByUrl('/app/products');
   }
 
@@ -268,7 +271,6 @@ export class ProductFormComponent {
   }
 
   private handleSaveError(err: HttpErrorResponse): void {
-    this.submitting.set(false);
     this.error.set(apiErrorMessage(err));
     if (err.status === 409 && !this.isNew()) {
       this.reload();

@@ -56,7 +56,23 @@ public sealed class SignUpCommandHandler(
 
         shops.Add(shop);
         users.Add(owner);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ConflictAppException)
+        {
+            // TOCTOU: another request passed the uniqueness checks above concurrently.
+            // Re-check to give the user a field-specific message.
+            if (await shops.GetByLicenseLookupHashAsync(lookupHash, cancellationToken) is not null)
+                throw new ConflictAppException("This shop is already registered. Please sign in.");
+
+            if (await users.GetByEmailAsync(email, cancellationToken) is not null)
+                throw new ConflictAppException("An account with this email already exists.");
+
+            throw;
+        }
 
         var token = jwt.Create(owner, shop, plan);
         return AuthMapping.ToAuthResponse(token, owner, shop, plan);

@@ -14,6 +14,9 @@ namespace OrderFlow.Infrastructure.Persistence.Repositories;
 public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
 {
     /// <inheritdoc />
+    public bool IsInTransaction => db.Database.CurrentTransaction is not null;
+
+    /// <inheritdoc />
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try

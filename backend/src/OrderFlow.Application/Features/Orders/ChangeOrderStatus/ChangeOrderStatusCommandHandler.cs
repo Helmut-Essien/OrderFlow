@@ -36,6 +36,9 @@ public sealed class ChangeOrderStatusCommandHandler(
             var order = await orders.GetTrackedByIdAsync(request.OrderId, ct)
                 ?? throw new NotFoundAppException("Order not found.");
 
+            if (order.ShopId != shopId)
+                throw new NotFoundAppException("Order not found.");
+
             if (order.Version != request.ExpectedVersion)
                 throw new ConcurrencyAppException("This order was updated by someone else. Refresh and try again.");
 
@@ -47,7 +50,7 @@ public sealed class ChangeOrderStatusCommandHandler(
 
             if (from == OrderStatus.Pending && target == OrderStatus.Confirmed)
             {
-                await OrderStock.ReserveAsync(products, stockMovements, order, shopId, currentUser.UserId, ct);
+                await OrderStock.ReserveAsync(products, stockMovements, unitOfWork, order, shopId, currentUser.UserId, ct);
             }
             else if (from == OrderStatus.Confirmed && target == OrderStatus.Paid)
             {
@@ -55,7 +58,7 @@ public sealed class ChangeOrderStatusCommandHandler(
             }
             else if (target == OrderStatus.Cancelled && from is OrderStatus.Confirmed or OrderStatus.Paid)
             {
-                await OrderStock.ReleaseAsync(products, stockMovements, order, shopId, currentUser.UserId, ct);
+                await OrderStock.ReleaseAsync(products, stockMovements, unitOfWork, order, shopId, currentUser.UserId, ct);
             }
 
             await unitOfWork.SaveChangesAsync(ct);

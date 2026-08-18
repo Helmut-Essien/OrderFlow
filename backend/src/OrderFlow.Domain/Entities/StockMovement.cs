@@ -58,7 +58,7 @@ public class StockMovement
         if (resultingStock < 0 || resultingStock > ProductConstraints.MaxStock)
             throw new ArgumentOutOfRangeException(nameof(resultingStock), "Resulting stock must be between 0 and 99,999,999.");
 
-        var normalizedNotes = NormalizeOptional(notes, ProductConstraints.NotesMaxLength, nameof(notes));
+        var normalizedNotes = NormalizeOptional(notes, StockMovementConstraints.NotesMaxLength, nameof(notes));
         var normalizedUserId = string.IsNullOrWhiteSpace(createdByUserId) ? null : createdByUserId.Trim();
 
         return new StockMovement

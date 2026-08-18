@@ -25,6 +25,9 @@ public sealed class UpdateProductCommandHandler(
         var product = await products.GetTrackedByIdAsync(request.ProductId, cancellationToken)
             ?? throw new NotFoundAppException("Product not found.");
 
+        if (product.ShopId != currentUser.ShopId)
+            throw new NotFoundAppException("Product not found.");
+
         if (product.Version != request.ExpectedVersion)
             throw new ConcurrencyAppException("This product was updated by someone else. Refresh and try again.");
 

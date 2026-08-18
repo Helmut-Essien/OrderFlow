@@ -216,14 +216,15 @@ export class OrderFormComponent {
           quantity: line.quantity
         }))
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: (order) => {
-          this.submitting.set(false);
           void this.router.navigate(['/app/orders', order.id]);
         },
         error: (err: HttpErrorResponse) => {
-          this.submitting.set(false);
           this.error.set(apiErrorMessage(err));
         }
       });

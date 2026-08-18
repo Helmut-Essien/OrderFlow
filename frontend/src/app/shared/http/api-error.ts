@@ -22,7 +22,8 @@ export function apiErrorMessage(
   const body = err.error as ApiErrorBody | string | null | undefined;
 
   if (typeof body === 'string' && body.trim()) {
-    return body;
+    const trimmed = body.trim();
+    return trimmed.length > 300 ? trimmed.slice(0, 300) + '…' : trimmed;
   }
 
   if (body && typeof body === 'object') {

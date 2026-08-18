@@ -40,7 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ILicenseKeyProtector, LicenseKeyProtector>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

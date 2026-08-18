@@ -41,16 +41,28 @@ internal sealed class FakeUnitOfWork : IUnitOfWork
 {
     public int SaveCount { get; private set; }
 
+    public bool IsInTransaction { get; private set; }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         SaveCount++;
         return Task.CompletedTask;
     }
 
-    public Task ExecuteInTransactionAsync(
+    public async Task ExecuteInTransactionAsync(
         Func<CancellationToken, Task> work,
         CancellationToken cancellationToken = default)
-        => work(cancellationToken);
+    {
+        IsInTransaction = true;
+        try
+        {
+            await work(cancellationToken);
+        }
+        finally
+        {
+            IsInTransaction = false;
+        }
+    }
 }
 
 internal sealed class FakePlatformLicenseClient : IPlatformLicenseClient

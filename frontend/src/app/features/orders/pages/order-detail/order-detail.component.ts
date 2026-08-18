@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { SeoService } from '../../../../core/seo/seo.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
@@ -87,15 +88,16 @@ export class OrderDetailComponent {
         status: action.status,
         expectedVersion: current.version
       })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: (updated) => {
           this.order.set(updated);
-          this.submitting.set(false);
           this.confirmingCancel.set(false);
         },
         error: (err: HttpErrorResponse) => {
-          this.submitting.set(false);
           this.error.set(apiErrorMessage(err));
           if (err.status === 409) {
             this.load(current.id);

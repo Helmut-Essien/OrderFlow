@@ -16,6 +16,7 @@ internal static class OrderStock
     public static Task ReserveAsync(
         IProductRepository products,
         IStockMovementRepository movements,
+        IUnitOfWork unitOfWork,
         Order order,
         string shopId,
         string? userId,
@@ -24,6 +25,7 @@ internal static class OrderStock
         return ApplyDeltasAsync(
             products,
             movements,
+            unitOfWork,
             order,
             shopId,
             userId,
@@ -36,6 +38,7 @@ internal static class OrderStock
     public static Task ReleaseAsync(
         IProductRepository products,
         IStockMovementRepository movements,
+        IUnitOfWork unitOfWork,
         Order order,
         string shopId,
         string? userId,
@@ -44,6 +47,7 @@ internal static class OrderStock
         return ApplyDeltasAsync(
             products,
             movements,
+            unitOfWork,
             order,
             shopId,
             userId,
@@ -53,7 +57,8 @@ internal static class OrderStock
     }
 
     /// <summary>
-    /// Audit-only Deduct rows. Stock was already reserved; a second decrement would oversell.
+    /// Audit-only Deduct rows. Stock was already held by Reserve; no physical stock change occurs.
+    /// <c>QuantityDelta</c> is zero and <c>ResultingStock</c> is a point-in-time snapshot.
     /// </summary>
     public static async Task WriteDeductAuditAsync(
         IProductRepository products,
@@ -72,13 +77,14 @@ internal static class OrderStock
             if (!byId.TryGetValue(line.ProductId, out var product))
                 throw new NotFoundAppException("Product not found.");
 
+            // Delta is 0: stock was already decremented by Reserve. This row is purely for audit.
             movements.Add(StockMovement.Create(
                 shopId,
                 product.Id,
-                -line.Quantity,
+                0,
                 product.Stock,
                 StockMovementType.Deduct,
-                $"Paid order {order.Id}",
+                $"Paid order {order.Id} ({line.Quantity} × {product.Sku})",
                 userId));
         }
     }
@@ -86,6 +92,7 @@ internal static class OrderStock
     private static async Task ApplyDeltasAsync(
         IProductRepository products,
         IStockMovementRepository movements,
+        IUnitOfWork unitOfWork,
         Order order,
         string shopId,
         string? userId,
@@ -93,38 +100,18 @@ internal static class OrderStock
         StockMovementType type,
         CancellationToken cancellationToken)
     {
+        if (!unitOfWork.IsInTransaction)
+            throw new InvalidOperationException("Stock mutations must run inside a database transaction.");
+
         var loaded = await LoadLinesAsync(products, order, cancellationToken);
         foreach (var (line, product) in loaded)
         {
-            // Inactive SKUs must not be newly reserved; cancelling must still return stock.
             if (quantitySign < 0 && !product.IsActive)
                 throw new ConflictAppException($"{product.Sku} is inactive and cannot be sold.");
 
             var delta = quantitySign * line.Quantity;
-            var adjusted = await products.TryAdjustStockAsync(
-                product.Id,
-                shopId,
-                product.Version,
-                delta,
-                cancellationToken);
-
-            if (adjusted is null)
-            {
-                var existing = await products.GetByIdAsync(product.Id, cancellationToken)
-                    ?? throw new NotFoundAppException("Product not found.");
-
-                if (existing.Version != product.Version)
-                    throw new ConcurrencyAppException("Stock changed while this order was saving. Refresh and try again.");
-
-                var resulting = existing.Stock + delta;
-                if (resulting < 0)
-                    throw new ConflictAppException($"Not enough stock for {existing.Sku}.");
-
-                if (resulting > ProductConstraints.MaxStock)
-                    throw new ConflictAppException($"Stock cannot exceed {ProductConstraints.MaxStock:N0}.");
-
-                throw new ConcurrencyAppException("Stock changed while this order was saving. Refresh and try again.");
-            }
+            var adjusted = await TryAdjustWithRetryAsync(
+                products, product, shopId, delta, cancellationToken);
 
             movements.Add(StockMovement.Create(
                 shopId,
@@ -135,6 +122,48 @@ internal static class OrderStock
                 $"{type} for order {order.Id}",
                 userId));
         }
+    }
+
+    /// <summary>
+    /// Retries the atomic stock UPDATE up to 2 times when the failure is a pure version mismatch
+    /// (another concurrent order bumped the version but stock is still sufficient).
+    /// </summary>
+    private static async Task<StockAdjustmentResult> TryAdjustWithRetryAsync(
+        IProductRepository products,
+        Product product,
+        string shopId,
+        int delta,
+        CancellationToken cancellationToken)
+    {
+        const int maxAttempts = 3;
+        var version = product.Version;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            var adjusted = await products.TryAdjustStockAsync(
+                product.Id, shopId, version, delta, cancellationToken);
+
+            if (adjusted is not null)
+                return adjusted;
+
+            var existing = await products.GetByIdAsync(product.Id, cancellationToken)
+                ?? throw new NotFoundAppException("Product not found.");
+
+            var resulting = existing.Stock + delta;
+            if (resulting < 0)
+                throw new ConflictAppException($"Not enough stock for {existing.Sku}.");
+
+            if (resulting > ProductConstraints.MaxStock)
+                throw new ConflictAppException($"Stock cannot exceed {ProductConstraints.MaxStock:N0}.");
+
+            if (attempt == maxAttempts)
+                throw new ConcurrencyAppException("Stock changed while this order was saving. Refresh and try again.");
+
+            // Version mismatch but stock is sufficient — retry with the fresh version.
+            version = existing.Version;
+        }
+
+        throw new ConcurrencyAppException("Stock changed while this order was saving. Refresh and try again.");
     }
 
     private static async Task<List<(OrderLine Line, Product Product)>> LoadLinesAsync(

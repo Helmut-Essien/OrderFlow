@@ -32,7 +32,7 @@ internal sealed class JwtBearerConfigurator(
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key)),
             ClockSkew = TimeSpan.FromMinutes(1),
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
-            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier
+            NameClaimType = System.Security.Claims.ClaimTypes.Name
         };
     }
 }

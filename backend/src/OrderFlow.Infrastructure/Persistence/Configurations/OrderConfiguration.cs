@@ -60,6 +60,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(o => o.ShopId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(o => o.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasIndex(o => o.CreatedByUserId);
+
         builder.HasMany(o => o.Lines)
             .WithOne(l => l.Order)
             .HasForeignKey(l => l.OrderId)

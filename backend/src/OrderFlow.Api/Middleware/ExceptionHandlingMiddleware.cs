@@ -57,6 +57,12 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         else
             logger.LogInformation("Request failed with {StatusCode}: {Message}", (int)status, message);
 
+        if (context.Response.HasStarted)
+        {
+            logger.LogWarning("Response already started; cannot write error body for {StatusCode}", (int)status);
+            return;
+        }
+
         context.Response.StatusCode = (int)status;
         context.Response.ContentType = "application/json";
 
