@@ -1,15 +1,22 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using OrderFlow.Application.Common.Exceptions;
 
 namespace OrderFlow.Api.Middleware;
 
 /// <summary>
-/// Maps <see cref="AppException"/> and FluentValidation failures to camelCase JSON. Unhandled exceptions become 500 without leaking internals.
+/// Maps <see cref="AppException"/>, EF concurrency failures, and FluentValidation failures to camelCase JSON.
+/// Unhandled exceptions become 500 without leaking internals.
 /// </summary>
 public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
+    private static readonly JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     /// <summary>Catches the rest of the pipeline and writes a camelCase error body.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
@@ -37,13 +44,18 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
                 "Validation failed.",
                 null,
                 ex.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })),
+            DbUpdateConcurrencyException => (
+                HttpStatusCode.Conflict,
+                "This record was updated by someone else. Refresh and try again.",
+                "concurrency",
+                (object?)null),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", null, (object?)null)
         };
 
         if (status == HttpStatusCode.InternalServerError)
             logger.LogError(exception, "Unhandled exception");
         else
-            logger.LogInformation(exception, "Request failed with {StatusCode}", (int)status);
+            logger.LogInformation("Request failed with {StatusCode}: {Message}", (int)status, message);
 
         context.Response.StatusCode = (int)status;
         context.Response.ContentType = "application/json";
@@ -55,9 +67,6 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             errors
         };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        }));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(payload, CamelCaseOptions));
     }
 }

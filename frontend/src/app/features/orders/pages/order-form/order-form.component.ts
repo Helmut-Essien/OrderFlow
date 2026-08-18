@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subject, switchMap, EMPTY, startWith } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import { SeoService } from '../../../../core/seo/seo.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
 import { requiredTrimmed } from '../../../../shared/validators/auth.validators';
@@ -39,6 +40,7 @@ export class OrderFormComponent {
   private readonly products = inject(ProductApi);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
 
   readonly limits = ORDER_FIELD_LIMITS;
   readonly fieldClass =
@@ -75,6 +77,7 @@ export class OrderFormComponent {
   );
 
   constructor() {
+    this.seo.applyPrivatePage('New Order — OrderFlow');
     this.productSearchInput$
       .pipe(
         debounceTime(300),

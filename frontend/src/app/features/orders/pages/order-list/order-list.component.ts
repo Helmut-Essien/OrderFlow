@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, switchMap, EMPTY } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import { SeoService } from '../../../../core/seo/seo.service';
 import { ShopStateService } from '../../../../core/shop/shop-state.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
@@ -25,6 +26,7 @@ import {
 })
 export class OrderListComponent {
   private readonly api = inject(OrderApi);
+  private readonly seo = inject(SeoService);
   readonly shop = inject(ShopStateService);
 
   readonly limits = ORDER_FIELD_LIMITS;
@@ -67,6 +69,7 @@ export class OrderListComponent {
   );
 
   constructor() {
+    this.seo.applyPrivatePage('Orders — OrderFlow');
     this.searchInput$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => {

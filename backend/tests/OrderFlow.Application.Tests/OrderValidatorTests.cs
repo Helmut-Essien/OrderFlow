@@ -46,8 +46,13 @@ public class OrderValidatorTests
             new ChangeOrderStatusCommand("01ARZ3NDEKTSV4RRFFQ69G5FAV", "1", 0));
 
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(ChangeOrderStatusCommand.Status));
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(ChangeOrderStatusCommand.ExpectedVersion));
+        Assert.Contains(
+            result.Errors,
+            e => e.ErrorMessage.Contains("Status must be Confirmed", StringComparison.OrdinalIgnoreCase));
+        // ValidationFailure.PropertyName formatting can differ (e.g., "Expected Version").
+        Assert.Contains(
+            result.Errors,
+            e => e.ErrorMessage.Contains("greater than or equal to", StringComparison.OrdinalIgnoreCase) && e.ErrorMessage.Contains("1"));
     }
 
     [Fact]

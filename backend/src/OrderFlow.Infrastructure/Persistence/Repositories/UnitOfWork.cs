@@ -1,11 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using OrderFlow.Application.Common.Exceptions;
 using OrderFlow.Application.Common.Interfaces;
 using OrderFlow.Infrastructure.Persistence;
 
 namespace OrderFlow.Infrastructure.Persistence.Repositories;
 
-/// <summary>Commits EF changes. Maps <see cref="DbUpdateConcurrencyException"/> to <see cref="ConcurrencyAppException"/>.</summary>
+/// <summary>
+/// Commits EF changes. Maps <see cref="DbUpdateConcurrencyException"/> to <see cref="ConcurrencyAppException"/>
+/// and PostgreSQL unique-violation (23505) to <see cref="ConflictAppException"/> so concurrent
+/// signup/SKU races produce 409 instead of 500.
+/// </summary>
 public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
 {
     /// <inheritdoc />
@@ -19,6 +24,11 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
         {
             throw new ConcurrencyAppException(
                 "This record was updated by someone else. Refresh and try again.");
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new ConflictAppException(
+                "A record with the same unique value already exists.");
         }
     }
 
@@ -38,5 +48,11 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    /// <summary>PostgreSQL error code 23505 is a unique-constraint violation.</summary>
+    private static bool IsUniqueViolation(DbUpdateException ex)
+    {
+        return ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
     }
 }

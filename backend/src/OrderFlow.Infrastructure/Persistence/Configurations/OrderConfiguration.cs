@@ -51,6 +51,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         // List newest-first and monthly plan-cap counts filter CreatedAt per shop.
         builder.HasIndex(o => new { o.ShopId, o.CreatedAt });
         builder.HasIndex(o => new { o.ShopId, o.Status });
+        builder.HasIndex(o => new { o.ShopId, o.Status, o.CreatedAt });
         // Dashboard “today’s sales” filters PaidAt per shop, then keeps only Paid/Fulfilled.
         builder.HasIndex(o => new { o.ShopId, o.PaidAt });
 

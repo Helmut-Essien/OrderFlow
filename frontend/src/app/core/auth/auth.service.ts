@@ -91,6 +91,8 @@ export class AuthService {
 
   /**
    * Drops an expired or rejected session. Navigates to login only from `/app` so landing/login 401s stay put.
+   * The flag stays set permanently — once a 401 clears the session, subsequent 401s from in-flight
+   * requests are harmless and must not trigger duplicate navigations.
    */
   handleUnauthorized(): void {
     if (this.handlingUnauthorized) {
@@ -103,10 +105,10 @@ export class AuthService {
     if (onApp) {
       void this.router.navigateByUrl('/login');
     }
-    this.handlingUnauthorized = false;
   }
 
   private storeSession(response: AuthResponse): void {
+    this.handlingUnauthorized = false;
     if (this.isBrowser) {
       localStorage.setItem(TOKEN_KEY, response.token);
     }
@@ -138,7 +140,12 @@ export class AuthService {
       return;
     }
 
-    const delay = Math.max(0, expiryMs - Date.now() - 30_000);
+    const delay = expiryMs - Date.now() - 30_000;
+    if (delay <= 0) {
+      this.clearSession();
+      return;
+    }
+
     this.expiryTimer = setTimeout(() => this.logout(), delay);
   }
 

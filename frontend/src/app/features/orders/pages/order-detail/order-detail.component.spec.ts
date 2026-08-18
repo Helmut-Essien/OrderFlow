@@ -30,7 +30,14 @@ describe('OrderDetailComponent', () => {
       imports: [OrderDetailComponent],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => pendingOrder.id } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: { get: () => pendingOrder.id } },
+            // OrderDetailComponent subscribes to `route.paramMap`; tests must provide it.
+            paramMap: of({ get: () => pendingOrder.id } as any)
+          }
+        },
         {
           provide: OrderApi,
           useValue: {

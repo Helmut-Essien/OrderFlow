@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { SeoService } from '../../../../core/seo/seo.service';
 import { ShopStateService } from '../../../../core/shop/shop-state.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
@@ -20,6 +21,7 @@ import { DashboardDto } from '../../data/dashboard.models';
 export class DashboardComponent {
   readonly auth = inject(AuthService);
   readonly shop = inject(ShopStateService);
+  private readonly seo = inject(SeoService);
   private readonly dashboardApi = inject(DashboardApi);
 
   readonly chipClass = orderStatusChipClass;
@@ -28,6 +30,7 @@ export class DashboardComponent {
   readonly error = signal<string | null>(null);
 
   constructor() {
+    this.seo.applyPrivatePage('Dashboard — OrderFlow');
     this.dashboardApi
       .get()
       .pipe(takeUntilDestroyed())

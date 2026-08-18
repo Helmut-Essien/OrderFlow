@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { SeoService } from '../../../../core/seo/seo.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
 import {
@@ -30,15 +31,16 @@ export class ProductFormComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
 
   readonly limits = PRODUCT_FIELD_LIMITS;
   readonly fieldClass =
     'mt-1.5 w-full min-h-[44px] rounded-lg border border-[#E5E0D5] bg-white px-3 py-2.5 text-ink placeholder:text-slate-400 focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/20';
 
-  readonly productId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
+  readonly productId = signal<string | null>(null);
   readonly isNew = computed(() => this.productId() === null);
   readonly product = signal<ProductDto | null>(null);
-  readonly loading = signal(!this.isNew());
+  readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly adjusting = signal(false);
   readonly error = signal<string | null>(null);
@@ -77,18 +79,35 @@ export class ProductFormComponent {
   });
 
   constructor() {
-    const id = this.productId();
-    if (id) {
-      // Stock is adjusted in a separate form; disable so hidden validators cannot block Save.
-      this.form.controls.stock.disable({ emitEvent: false });
-      this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (product) => this.patchProduct(product),
-        error: (err) => {
+    this.seo.applyPrivatePage(this.isNew() ? 'New Product — OrderFlow' : 'Edit Product — OrderFlow');
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        this.error.set(null);
+        this.stockError.set(null);
+        this.product.set(null);
+        this.loading.set(!this.isNew()); // optimistic until we know
+
+        this.productId.set(id);
+
+        if (id) {
+          // Stock is adjusted in a separate form; disable so hidden validators cannot block Save.
+          this.form.controls.stock.disable({ emitEvent: false });
+          this.loading.set(true);
+          this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (product) => this.patchProduct(product),
+            error: (err) => {
+              this.loading.set(false);
+              this.error.set(apiErrorMessage(err));
+            }
+          });
+        } else {
+          // New product: enable stock input + keep the default draft values.
+          this.form.controls.stock.enable({ emitEvent: false });
           this.loading.set(false);
-          this.error.set(apiErrorMessage(err));
         }
       });
-    }
   }
 
   showError(
@@ -223,7 +242,6 @@ export class ProductFormComponent {
 
   private patchProduct(product: ProductDto): void {
     this.product.set(product);
-    this.productId.set(product.id);
     this.form.patchValue({
       name: product.name,
       sku: product.sku,
@@ -241,6 +259,8 @@ export class ProductFormComponent {
     if (!id) {
       return;
     }
+
+    this.error.set(null);
     this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (product) => this.patchProduct(product),
       error: (err) => this.error.set(apiErrorMessage(err))

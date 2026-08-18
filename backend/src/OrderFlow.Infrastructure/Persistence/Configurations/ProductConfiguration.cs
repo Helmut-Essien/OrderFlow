@@ -41,7 +41,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Name).HasMaxLength(200).IsRequired();
         builder.Property(p => p.Sku).HasMaxLength(50).IsRequired();
         builder.Property(p => p.Category).HasMaxLength(80);
-        builder.Property(p => p.Price).HasPrecision(12, 2).IsRequired();
+        builder.Property(p => p.Price).HasPrecision(11, 2).IsRequired();
         builder.Property(p => p.Stock).IsRequired();
         builder.Property(p => p.LowStockThreshold).IsRequired();
         builder.Property(p => p.IsActive).IsRequired();

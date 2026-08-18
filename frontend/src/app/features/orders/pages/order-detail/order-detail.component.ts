@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { SeoService } from '../../../../core/seo/seo.service';
 import { apiErrorMessage } from '../../../../shared/http/api-error';
 import { GhsCurrencyPipe } from '../../../../shared/pipes/ghs-currency.pipe';
 import { OrderApi } from '../../data/order.api';
@@ -24,6 +25,7 @@ export class OrderDetailComponent {
   private readonly api = inject(OrderApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
 
   readonly chipClass = orderStatusChipClass;
   readonly order = signal<OrderDto | null>(null);
@@ -51,14 +53,23 @@ export class OrderDetailComponent {
   });
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.loading.set(false);
-      this.error.set('Order not found.');
-      return;
-    }
+    this.seo.applyPrivatePage('Order — OrderFlow');
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        // Clear stale banners on navigation (including 409-reload flows).
+        this.error.set(null);
 
-    this.load(id);
+        if (!id) {
+          this.order.set(null);
+          this.loading.set(false);
+          this.error.set('Order not found.');
+          return;
+        }
+
+        this.load(id);
+      });
   }
 
   /** Moves status along the lifecycle. 409 concurrency reloads so the shop can retry. */
@@ -112,6 +123,7 @@ export class OrderDetailComponent {
 
   private load(id: string): void {
     this.loading.set(true);
+    this.error.set(null);
     this.api.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (order) => {
         this.order.set(order);

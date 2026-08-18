@@ -13,12 +13,20 @@ public sealed class ChangeOrderStatusCommandValidator : AbstractValidator<Change
         RuleFor(x => x.Status)
             .NotEmpty()
             .Must(BeDefinedStatus)
-            .WithMessage("Status must be Pending, Confirmed, Paid, Fulfilled, or Cancelled.");
+            .WithMessage("Status must be Confirmed, Paid, Fulfilled, or Cancelled.");
         RuleFor(x => x.ExpectedVersion).GreaterThanOrEqualTo(1);
     }
 
     private static bool BeDefinedStatus(string status)
     {
-        return Enum.GetNames<OrderStatus>().Any(n => n.Equals(status, StringComparison.OrdinalIgnoreCase));
+        // Pending is a valid current state, but this endpoint is only for transitions to non-Pending targets.
+        // Validation must accept enum *names* (e.g. "Paid"), not numeric strings ("1").
+        var matchedName = Enum.GetNames<OrderStatus>()
+            .FirstOrDefault(n => n.Equals(status, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedName is null)
+            return false;
+
+        return !matchedName.Equals(OrderStatus.Pending.ToString(), StringComparison.Ordinal);
     }
 }

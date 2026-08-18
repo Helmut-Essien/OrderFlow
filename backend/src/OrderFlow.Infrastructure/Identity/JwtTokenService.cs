@@ -25,7 +25,6 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             [JwtRegisteredClaimNames.Sub] = user.Id,
             [JwtRegisteredClaimNames.Email] = user.Email,
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-            [ClaimTypes.NameIdentifier] = user.Id,
             [ClaimTypes.Name] = user.DisplayName,
             [ClaimTypes.Role] = user.Role.ToString(),
             [ClaimNames.ShopId] = shop.Id,

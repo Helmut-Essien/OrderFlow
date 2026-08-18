@@ -122,7 +122,7 @@
                 <button
                   type="button"
                   class="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-forest px-3 text-sm font-semibold text-forest hover:bg-forest hover:text-white disabled:opacity-50"
-                  [disabled]="isOnOrder(product.id)"
+                  [disabled]="isOnOrder(product.id) || lines().length >= limits.maxLines"
                   (click)="addProduct(product)">
                   Add
                 </button>

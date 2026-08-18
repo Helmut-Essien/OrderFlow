@@ -63,9 +63,15 @@ internal static class OrderStock
         string? userId,
         CancellationToken cancellationToken)
     {
-        var loaded = await LoadLinesAsync(products, order, cancellationToken);
-        foreach (var (line, product) in loaded)
+        var ids = order.Lines.Select(l => l.ProductId).Distinct(StringComparer.Ordinal).ToList();
+        var freshProducts = await products.GetByIdsAsync(ids, cancellationToken);
+        var byId = freshProducts.ToDictionary(p => p.Id, StringComparer.Ordinal);
+
+        foreach (var line in order.Lines)
         {
+            if (!byId.TryGetValue(line.ProductId, out var product))
+                throw new NotFoundAppException("Product not found.");
+
             movements.Add(StockMovement.Create(
                 shopId,
                 product.Id,

@@ -33,13 +33,13 @@ export const nonZeroNumber: ValidatorFn = (
   return Number(value) === 0 ? { nonZero: true } : null;
 };
 
-/** Group validator: `password` and `confirmPassword` must match when confirm is filled. */
+/** Group validator: `password` and `confirmPassword` must match when confirm has any value. */
 export const passwordsMatchValidator: ValidatorFn = (
   control: AbstractControl
 ): ValidationErrors | null => {
   const password = control.get('password')?.value as string | undefined;
   const confirmPassword = control.get('confirmPassword')?.value as string | undefined;
-  if (!confirmPassword?.trim()) {
+  if (!confirmPassword) {
     return null;
   }
   return password === confirmPassword ? null : { passwordsMismatch: true };
